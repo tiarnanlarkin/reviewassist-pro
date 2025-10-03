@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing - ReviewAssist Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .plan-card {
+            transition: all 0.3s ease;
+        }
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .feature-check {
+            color: #10b981;
+        }
+        .feature-cross {
+            color: #ef4444;
+        }
+        .billing-toggle {
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center">
+                        <span class="text-2xl">⭐</span>
+                        <span class="ml-2 text-xl font-bold text-gray-900">ReviewAssist Pro</span>
+                    </a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-600 hover:text-gray-900">Dashboard</a>
+                    <a href="/pricing.html" class="text-purple-600 font-medium">Pricing</a>
+                    <button id="loginBtn" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">
+                        Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="gradient-bg text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6">
+                Choose Your Perfect Plan
+            </h1>
+            <p class="text-xl text-purple-100 mb-8 max-w-3xl mx-auto">
+                Start with a 14-day free trial. No credit card required. Upgrade or downgrade at any time.
+            </p>
+            
+            <!-- Billing Toggle -->
+            <div class="flex items-center justify-center mb-8">
+                <span class="text-purple-100 mr-3">Monthly</span>
+                <div class="relative">
+                    <input type="checkbox" id="billingToggle" class="sr-only">
+                    <label for="billingToggle" class="billing-toggle block w-14 h-8 bg-purple-500 rounded-full cursor-pointer">
+                        <span class="billing-toggle block w-6 h-6 bg-white rounded-full mt-1 ml-1 transition-transform duration-300"></span>
+                    </label>
+                </div>
+                <span class="text-purple-100 ml-3">Annual</span>
+                <span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full ml-2">Save 17%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing Plans -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div id="pricingPlans" class="grid md:grid-cols-3 gap-8">
+            <!-- Plans will be loaded here -->
+        </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="bg-white py-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">Frequently Asked Questions</h2>
+            <div class="space-y-8">
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Can I change my plan at any time?</h3>
+                    <p class="text-gray-600">Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, and billing is prorated.</p>
+                </div>
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">What happens if I exceed my plan limits?</h3>
+                    <p class="text-gray-600">We'll notify you when you're approaching your limits. You can upgrade your plan or additional usage will be charged at standard rates.</p>
+                </div>
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Is there a free trial?</h3>
+                    <p class="text-gray-600">Yes! All plans come with a 14-day free trial. No credit card required to start.</p>
+                </div>
+                <div class="border-b border-gray-200 pb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Can I cancel anytime?</h3>
+                    <p class="text-gray-600">Absolutely. You can cancel your subscription at any time. You'll continue to have access until the end of your current billing period.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="gradient-bg text-white py-16">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl font-bold mb-4">Ready to Transform Your Review Management?</h2>
+            <p class="text-xl text-purple-100 mb-8">Join thousands of businesses using ReviewAssist Pro to improve their online reputation.</p>
+            <button class="bg-white text-purple-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                Start Free Trial
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <span class="text-2xl">⭐</span>
+                        <span class="ml-2 text-xl font-bold">ReviewAssist Pro</span>
+                    </div>
+                    <p class="text-gray-400">AI-powered review management for modern businesses.</p>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Product</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white">Features</a></li>
+                        <li><a href="#" class="hover:text-white">Pricing</a></li>
+                        <li><a href="#" class="hover:text-white">API</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Support</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white">Help Center</a></li>
+                        <li><a href="#" class="hover:text-white">Contact</a></li>
+                        <li><a href="#" class="hover:text-white">Status</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold mb-4">Legal</h3>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white">Privacy</a></li>
+                        <li><a href="#" class="hover:text-white">Terms</a></li>
+                        <li><a href="#" class="hover:text-white">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 ReviewAssist Pro. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let isAnnual = false;
+        let plans = [];
+
+        // Load pricing plans
+        async function loadPricingPlans() {
+            try {
+                const response = await fetch('/api/subscription/plans');
+                const data = await response.json();
+                
+                if (data.success) {
+                    plans = data.data;
+                    renderPricingPlans();
+                } else {
+                    console.error('Failed to load pricing plans:', data.message);
+                }
+            } catch (error) {
+                console.error('Error loading pricing plans:', error);
+            }
+        }
+
+        function renderPricingPlans() {
+            const container = document.getElementById('pricingPlans');
+            
+            container.innerHTML = plans.map(plan => {
+                const price = isAnnual ? plan.annual_price : plan.monthly_price;
+                const period = isAnnual ? 'year' : 'month';
+                const savings = isAnnual ? `Save $${((plan.monthly_price * 12) - plan.annual_price).toFixed(0)}` : '';
+                
+                const isPopular = plan.plan_type === 'professional';
+                
+                return `
+                    <div class="plan-card relative bg-white rounded-2xl shadow-lg p-8 ${isPopular ? 'ring-2 ring-purple-500' : ''}">
+                        ${isPopular ? '<div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-purple-500 text-white px-4 py-1 rounded-full text-sm font-medium">Most Popular</div>' : ''}
+                        
+                        <div class="text-center mb-8">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-2">${plan.name}</h3>
+                            <p class="text-gray-600 mb-6">${plan.description}</p>
+                            
+                            <div class="mb-4">
+                                <span class="text-4xl font-bold text-gray-900">$${price}</span>
+                                <span class="text-gray-600">/${period}</span>
+                            </div>
+                            
+                            ${savings ? `<div class="text-green-600 font-medium">${savings}</div>` : ''}
+                        </div>
+                        
+                        <div class="space-y-4 mb-8">
+                            ${plan.features.map(feature => `
+                                <div class="flex items-center">
+                                    <span class="${feature.is_included ? 'feature-check' : 'feature-cross'} mr-3">
+                                        ${feature.is_included ? '✓' : '✗'}
+                                    </span>
+                                    <span class="text-gray-700">
+                                        ${feature.feature_name}
+                                        ${feature.limit_value ? ` (${feature.limit_display})` : ''}
+                                    </span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <button 
+                            onclick="selectPlan('${plan.plan_type}', '${isAnnual ? 'annual' : 'monthly'}')"
+                            class="w-full ${isPopular ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-900 hover:bg-gray-800'} text-white py-3 rounded-lg font-semibold transition-colors"
+                        >
+                            Start Free Trial
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectPlan(planType, billingCycle) {
+            // Store selected plan in localStorage for checkout
+            localStorage.setItem('selectedPlan', JSON.stringify({
+                planType,
+                billingCycle
+            }));
+            
+            // Redirect to signup/checkout
+            window.location.href = `/?signup=true&plan=${planType}&billing=${billingCycle}`;
+        }
+
+        // Billing toggle functionality
+        document.getElementById('billingToggle').addEventListener('change', function() {
+            isAnnual = this.checked;
+            
+            // Update toggle visual state
+            const toggle = this.nextElementSibling.querySelector('span');
+            if (isAnnual) {
+                toggle.style.transform = 'translateX(24px)';
+            } else {
+                toggle.style.transform = 'translateX(0)';
+            }
+            
+            // Re-render plans with new pricing
+            renderPricingPlans();
+        });
+
+        // Login button functionality
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            window.location.href = '/';
+        });
+
+        // Load plans on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPricingPlans();
+        });
+    </script>
+</body>
+</html>
+

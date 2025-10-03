@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Analytics - ReviewAssist Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .widget-container {
+            min-height: 200px;
+            border: 2px dashed #e5e7eb;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .widget-container:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+        
+        .widget-container.occupied {
+            border-style: solid;
+            border-color: #10b981;
+            background: white;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(30px, -30px);
+        }
+        
+        .insight-card {
+            border-left: 4px solid;
+            transition: all 0.2s;
+        }
+        
+        .insight-card.trend {
+            border-left-color: #3b82f6;
+        }
+        
+        .insight-card.anomaly {
+            border-left-color: #ef4444;
+        }
+        
+        .insight-card.recommendation {
+            border-left-color: #10b981;
+        }
+        
+        .insight-card.prediction {
+            border-left-color: #f59e0b;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+            min-height: 600px;
+        }
+        
+        .widget-item {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+        }
+        
+        .widget-item:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .report-template {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .report-template:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+        
+        .report-template.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-xl font-bold text-indigo-600">
+                        <i class="fas fa-star mr-2"></i>ReviewAssist Pro
+                    </a>
+                    <div class="hidden md:ml-6 md:flex md:space-x-8">
+                        <a href="/" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Dashboard</a>
+                        <a href="/pricing.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Pricing</a>
+                        <a href="/integrations.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Integrations</a>
+                        <a href="/onboarding.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Onboarding</a>
+                        <a href="/advanced_analytics.html" class="text-indigo-600 hover:text-indigo-700 px-3 py-2 text-sm font-medium">Analytics</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="loginBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="advancedAnalyticsApp()">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-8 rounded-lg">
+                <h1 class="text-3xl font-bold mb-2">Advanced Analytics & Reporting</h1>
+                <p class="text-indigo-100">Create custom dashboards, generate reports, and gain deep insights from your review data</p>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <button @click="activeTab = 'dashboards'" 
+                            :class="activeTab === 'dashboards' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-chart-line mr-2"></i>Dashboards
+                    </button>
+                    <button @click="activeTab = 'reports'" 
+                            :class="activeTab === 'reports' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-file-alt mr-2"></i>Reports
+                    </button>
+                    <button @click="activeTab = 'visualizations'" 
+                            :class="activeTab === 'visualizations' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-chart-bar mr-2"></i>Visualizations
+                    </button>
+                    <button @click="activeTab = 'metrics'" 
+                            :class="activeTab === 'metrics' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Metrics
+                    </button>
+                    <button @click="activeTab = 'insights'" 
+                            :class="activeTab === 'insights' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-lightbulb mr-2"></i>Insights
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Dashboards Tab -->
+        <div x-show="activeTab === 'dashboards'" class="space-y-6">
+            <!-- Dashboard Header -->
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-semibold">Custom Dashboards</h2>
+                <div class="flex space-x-4">
+                    <button @click="createNewDashboard()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>New Dashboard
+                    </button>
+                    <button @click="toggleDashboardBuilder()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-tools mr-2"></i>Dashboard Builder
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard List -->
+            <div x-show="!showDashboardBuilder" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="dashboard in dashboards" :key="dashboard.id">
+                    <div class="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-lg" x-text="dashboard.name"></h3>
+                            <span x-show="dashboard.is_default" class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Default</span>
+                        </div>
+                        
+                        <p class="text-gray-600 text-sm mb-4" x-text="dashboard.description"></p>
+                        
+                        <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                            <span><i class="fas fa-puzzle-piece mr-1"></i><span x-text="dashboard.widgets.length"></span> widgets</span>
+                            <span><i class="fas fa-clock mr-1"></i>Updated <span x-text="formatDate(dashboard.updated_at)"></span></span>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button @click="viewDashboard(dashboard.id)" class="flex-1 bg-indigo-600 text-white px-3 py-2 rounded text-sm hover:bg-indigo-700 transition-colors">
+                                View
+                            </button>
+                            <button @click="editDashboard(dashboard.id)" class="bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button @click="exportDashboard(dashboard.id)" class="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition-colors">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Dashboard Builder -->
+            <div x-show="showDashboardBuilder" class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold">Dashboard Builder</h3>
+                    <button @click="toggleDashboardBuilder()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Widget Library -->
+                <div class="mb-6">
+                    <h4 class="font-medium mb-3">Widget Library</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <template x-for="widget in widgetLibrary" :key="widget.type">
+                            <div @click="addWidgetToDashboard(widget)" 
+                                 class="border rounded-lg p-4 text-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition-colors">
+                                <i :class="`fas fa-${widget.icon} text-2xl text-indigo-600 mb-2`"></i>
+                                <p class="text-sm font-medium" x-text="widget.name"></p>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Grid -->
+                <div class="dashboard-grid">
+                    <template x-for="i in 24" :key="i">
+                        <div class="widget-container" @click="selectGridCell(i)">
+                            <div class="h-full flex items-center justify-center text-gray-400">
+                                <i class="fas fa-plus"></i>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <div class="mt-6 flex space-x-4">
+                    <button @click="saveDashboard()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>Save Dashboard
+                    </button>
+                    <button @click="previewDashboard()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-eye mr-2"></i>Preview
+                    </button>
+                    <button @click="resetDashboard()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-undo mr-2"></i>Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div x-show="activeTab === 'reports'" class="space-y-6">
+            <!-- Reports Header -->
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-semibold">Custom Reports</h2>
+                <button @click="createNewReport()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>New Report
+                </button>
+            </div>
+
+            <!-- Report Templates -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Report Templates</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="template in reportTemplates" :key="template.id">
+                        <div @click="selectReportTemplate(template)" 
+                             :class="selectedTemplate?.id === template.id ? 'selected' : ''"
+                             class="report-template">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-semibold" x-text="template.name"></h4>
+                                <i :class="`fas fa-${template.icon} text-indigo-600`"></i>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-3" x-text="template.description"></p>
+                            <div class="flex items-center justify-between text-sm text-gray-500">
+                                <span x-text="template.type"></span>
+                                <span x-text="template.duration"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <div x-show="selectedTemplate" class="mt-6 flex space-x-4">
+                    <button @click="generateReport()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-play mr-2"></i>Generate Report
+                    </button>
+                    <button @click="scheduleReport()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-calendar mr-2"></i>Schedule Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Reports -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">Recent Reports</h3>
+                <div class="space-y-4">
+                    <template x-for="report in recentReports" :key="report.id">
+                        <div class="flex items-center justify-between p-4 border rounded-lg">
+                            <div class="flex items-center">
+                                <i :class="`fas fa-${getReportIcon(report.format)} text-2xl text-gray-600 mr-4`"></i>
+                                <div>
+                                    <h4 class="font-medium" x-text="report.name"></h4>
+                                    <p class="text-sm text-gray-600">
+                                        Generated <span x-text="formatDate(report.completed_at)"></span> • 
+                                        <span x-text="formatFileSize(report.file_size)"></span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button @click="downloadReport(report.id)" class="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-download mr-1"></i>Download
+                                </button>
+                                <button @click="shareReport(report.id)" class="bg-green-600 text-white px-3 py-2 rounded text-sm hover:bg-green-700 transition-colors">
+                                    <i class="fas fa-share mr-1"></i>Share
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualizations Tab -->
+        <div x-show="activeTab === 'visualizations'" class="space-y-6">
+            <!-- Visualizations Header -->
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-semibold">Data Visualizations</h2>
+                <button @click="createNewVisualization()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>New Visualization
+                </button>
+            </div>
+
+            <!-- Visualization Gallery -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="viz in visualizations" :key="viz.id">
+                    <div class="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold" x-text="viz.name"></h3>
+                            <span x-show="viz.is_real_time" class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Live</span>
+                        </div>
+                        
+                        <!-- Chart Preview -->
+                        <div class="chart-container mb-4">
+                            <canvas :id="`chart-${viz.id}`"></canvas>
+                        </div>
+                        
+                        <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                            <span x-text="viz.chart_type"></span>
+                            <span x-show="viz.is_interactive">Interactive</span>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button @click="viewVisualization(viz.id)" class="flex-1 bg-indigo-600 text-white px-3 py-2 rounded text-sm hover:bg-indigo-700 transition-colors">
+                                View
+                            </button>
+                            <button @click="editVisualization(viz.id)" class="bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Metrics Tab -->
+        <div x-show="activeTab === 'metrics'" class="space-y-6">
+            <!-- Metrics Header -->
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-semibold">Performance Metrics</h2>
+                <button @click="createNewMetric()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>New Metric
+                </button>
+            </div>
+
+            <!-- Metrics Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <template x-for="metric in metrics" :key="metric.id">
+                    <div class="metric-card">
+                        <div class="relative z-10">
+                            <h3 class="font-semibold text-lg mb-2" x-text="metric.metric_name"></h3>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-3xl font-bold" x-text="formatMetricValue(metric.current_value, metric.unit)"></span>
+                                <i :class="`fas fa-${getMetricIcon(metric.metric_type)} text-xl`"></i>
+                            </div>
+                            <div class="flex items-center justify-between text-sm opacity-90">
+                                <span x-text="metric.metric_type"></span>
+                                <span x-text="getMetricStatus(metric)"></span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Metrics Table -->
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold">Detailed Metrics</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metric</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Value</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Updated</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="metric in metrics" :key="metric.id">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900" x-text="metric.metric_name"></div>
+                                        <div class="text-sm text-gray-500" x-text="metric.metric_type"></div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatMetricValue(metric.current_value, metric.unit)"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="formatMetricValue(metric.target_value, metric.unit)"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span :class="getMetricStatusClass(metric)" class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" x-text="getMetricStatus(metric)"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(metric.last_updated)"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button @click="editMetric(metric.id)" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                                        <button @click="viewMetricHistory(metric.id)" class="text-green-600 hover:text-green-900">History</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights Tab -->
+        <div x-show="activeTab === 'insights'" class="space-y-6">
+            <!-- Insights Header -->
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-semibold">Analytics Insights</h2>
+                <button @click="generateNewInsights()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                    <i class="fas fa-magic mr-2"></i>Generate Insights
+                </button>
+            </div>
+
+            <!-- Insights Grid -->
+            <div class="space-y-6">
+                <template x-for="insight in insights" :key="insight.id">
+                    <div :class="`insight-card ${insight.insight_type}`" class="bg-white rounded-lg shadow p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center">
+                                <i :class="`fas fa-${getInsightIcon(insight.insight_type)} text-xl mr-3`"></i>
+                                <div>
+                                    <h3 class="font-semibold text-lg" x-text="insight.title"></h3>
+                                    <span :class="getImpactLevelClass(insight.impact_level)" class="text-xs px-2 py-1 rounded-full" x-text="insight.impact_level.toUpperCase()"></span>
+                                </div>
+                            </div>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-chart-line mr-1"></i>
+                                <span x-text="`${Math.round(insight.confidence_score * 100)}% confidence`"></span>
+                            </div>
+                        </div>
+                        
+                        <p class="text-gray-700 mb-4" x-text="insight.description"></p>
+                        
+                        <div x-show="insight.action_items && insight.action_items.length > 0" class="mb-4">
+                            <h4 class="font-medium mb-2">Recommended Actions:</h4>
+                            <ul class="list-disc list-inside space-y-1">
+                                <template x-for="action in insight.action_items" :key="action">
+                                    <li class="text-sm text-gray-600" x-text="action"></li>
+                                </template>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex items-center justify-between text-sm text-gray-500">
+                            <span x-text="formatDate(insight.generated_at)"></span>
+                            <div class="flex space-x-2">
+                                <button @click="viewInsightDetails(insight.id)" class="text-indigo-600 hover:text-indigo-800">View Details</button>
+                                <button @click="dismissInsight(insight.id)" class="text-gray-600 hover:text-gray-800">Dismiss</button>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function advancedAnalyticsApp() {
+            return {
+                activeTab: 'dashboards',
+                dashboards: [],
+                reports: [],
+                recentReports: [],
+                visualizations: [],
+                metrics: [],
+                insights: [],
+                showDashboardBuilder: false,
+                selectedTemplate: null,
+                widgetLibrary: [
+                    { type: 'line_chart', name: 'Line Chart', icon: 'chart-line' },
+                    { type: 'bar_chart', name: 'Bar Chart', icon: 'chart-bar' },
+                    { type: 'pie_chart', name: 'Pie Chart', icon: 'chart-pie' },
+                    { type: 'metric', name: 'Metric Card', icon: 'tachometer-alt' },
+                    { type: 'table', name: 'Data Table', icon: 'table' },
+                    { type: 'text', name: 'Text Widget', icon: 'font' }
+                ],
+                reportTemplates: [
+                    {
+                        id: 1,
+                        name: 'Monthly Summary',
+                        description: 'Comprehensive monthly review performance report',
+                        type: 'Dashboard',
+                        duration: '30 days',
+                        icon: 'calendar-alt'
+                    },
+                    {
+                        id: 2,
+                        name: 'Sentiment Analysis',
+                        description: 'Detailed sentiment trends and analysis',
+                        type: 'Chart',
+                        duration: '90 days',
+                        icon: 'smile'
+                    },
+                    {
+                        id: 3,
+                        name: 'Platform Performance',
+                        description: 'Performance comparison across platforms',
+                        type: 'Table',
+                        duration: '30 days',
+                        icon: 'chart-bar'
+                    }
+                ],
+
+                init() {
+                    this.loadDashboards();
+                    this.loadReports();
+                    this.loadVisualizations();
+                    this.loadMetrics();
+                    this.loadInsights();
+                },
+
+                async loadDashboards() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/advanced-analytics/dashboards', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.dashboards = data.dashboards;
+                        }
+                    } catch (error) {
+                        console.error('Error loading dashboards:', error);
+                    }
+                },
+
+                async loadReports() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/advanced-analytics/reports', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.reports = data.reports;
+                        }
+                    } catch (error) {
+                        console.error('Error loading reports:', error);
+                    }
+                },
+
+                async loadVisualizations() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/advanced-analytics/visualizations', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.visualizations = data.visualizations;
+                        }
+                    } catch (error) {
+                        console.error('Error loading visualizations:', error);
+                    }
+                },
+
+                async loadMetrics() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/advanced-analytics/metrics', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.metrics = data.metrics;
+                        }
+                    } catch (error) {
+                        console.error('Error loading metrics:', error);
+                    }
+                },
+
+                async loadInsights() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/advanced-analytics/insights', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.insights = data.insights;
+                        }
+                    } catch (error) {
+                        console.error('Error loading insights:', error);
+                    }
+                },
+
+                toggleDashboardBuilder() {
+                    this.showDashboardBuilder = !this.showDashboardBuilder;
+                },
+
+                selectReportTemplate(template) {
+                    this.selectedTemplate = template;
+                },
+
+                async generateReport() {
+                    if (!this.selectedTemplate) return;
+                    
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        // Create and execute report based on template
+                        const reportData = {
+                            name: this.selectedTemplate.name,
+                            description: this.selectedTemplate.description,
+                            report_type: this.selectedTemplate.type.toLowerCase(),
+                            data_sources: ['reviews', 'analytics'],
+                            filters: { time_period: this.selectedTemplate.duration },
+                            export_formats: ['pdf']
+                        };
+
+                        const createResponse = await fetch('/api/advanced-analytics/reports', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(reportData)
+                        });
+
+                        if (createResponse.ok) {
+                            const report = await createResponse.json();
+                            
+                            // Execute the report
+                            const executeResponse = await fetch(`/api/advanced-analytics/reports/${report.report.id}/execute`, {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `Bearer ${token}`,
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ format: 'pdf' })
+                            });
+
+                            if (executeResponse.ok) {
+                                this.showNotification('Report generated successfully!', 'success');
+                                this.loadReports();
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error generating report:', error);
+                        this.showNotification('Error generating report', 'error');
+                    }
+                },
+
+                async generateNewInsights() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/advanced-analytics/insights/generate', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.insights = data.insights;
+                            this.showNotification(`Generated ${data.count} new insights!`, 'success');
+                        }
+                    } catch (error) {
+                        console.error('Error generating insights:', error);
+                        this.showNotification('Error generating insights', 'error');
+                    }
+                },
+
+                formatDate(dateString) {
+                    if (!dateString) return 'Never';
+                    return new Date(dateString).toLocaleDateString();
+                },
+
+                formatMetricValue(value, unit) {
+                    if (value === null || value === undefined) return 'N/A';
+                    
+                    if (unit === 'percentage') {
+                        return `${Math.round(value * 100)}%`;
+                    } else if (unit === 'stars') {
+                        return `${value.toFixed(1)} ★`;
+                    } else if (unit === 'hours') {
+                        return `${value}h`;
+                    }
+                    
+                    return value.toString();
+                },
+
+                formatFileSize(bytes) {
+                    if (!bytes) return 'Unknown';
+                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+                },
+
+                getMetricIcon(metricType) {
+                    const icons = {
+                        'kpi': 'bullseye',
+                        'benchmark': 'chart-line',
+                        'trend': 'trending-up',
+                        'ratio': 'percentage'
+                    };
+                    return icons[metricType] || 'tachometer-alt';
+                },
+
+                getMetricStatus(metric) {
+                    if (!metric.current_value || !metric.target_value) return 'Unknown';
+                    
+                    if (metric.current_value >= metric.target_value) return 'On Target';
+                    if (metric.current_value >= metric.warning_threshold) return 'Warning';
+                    return 'Critical';
+                },
+
+                getMetricStatusClass(metric) {
+                    const status = this.getMetricStatus(metric);
+                    if (status === 'On Target') return 'bg-green-100 text-green-800';
+                    if (status === 'Warning') return 'bg-yellow-100 text-yellow-800';
+                    if (status === 'Critical') return 'bg-red-100 text-red-800';
+                    return 'bg-gray-100 text-gray-800';
+                },
+
+                getInsightIcon(insightType) {
+                    const icons = {
+                        'trend': 'chart-line',
+                        'anomaly': 'exclamation-triangle',
+                        'recommendation': 'lightbulb',
+                        'prediction': 'crystal-ball'
+                    };
+                    return icons[insightType] || 'info-circle';
+                },
+
+                getImpactLevelClass(impactLevel) {
+                    const classes = {
+                        'low': 'bg-blue-100 text-blue-800',
+                        'medium': 'bg-yellow-100 text-yellow-800',
+                        'high': 'bg-orange-100 text-orange-800',
+                        'critical': 'bg-red-100 text-red-800'
+                    };
+                    return classes[impactLevel] || 'bg-gray-100 text-gray-800';
+                },
+
+                getReportIcon(format) {
+                    const icons = {
+                        'pdf': 'file-pdf',
+                        'xlsx': 'file-excel',
+                        'csv': 'file-csv',
+                        'pptx': 'file-powerpoint'
+                    };
+                    return icons[format] || 'file';
+                },
+
+                showNotification(message, type = 'info') {
+                    // Simple notification implementation
+                    const notification = document.createElement('div');
+                    notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                        type === 'success' ? 'bg-green-500' : 
+                        type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+                    }`;
+                    notification.textContent = message;
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 3000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+

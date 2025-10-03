@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReviewAssist Pro - Enhanced AI-Powered Review Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        .theme-dark {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+        }
+        
+        .theme-light {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+        }
+        
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            min-width: 300px;
+            max-width: 500px;
+            padding: 16px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .notification-toast.show {
+            transform: translateX(0);
+        }
+        
+        .notification-toast.success {
+            background-color: #10b981;
+        }
+        
+        .notification-toast.error {
+            background-color: #ef4444;
+        }
+        
+        .notification-toast.info {
+            background-color: #3b82f6;
+        }
+        
+        .notification-toast.warning {
+            background-color: #f59e0b;
+        }
+        
+        .auth-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .auth-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
+            z-index: 100;
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .gradient-bg { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        }
+        
+        .card-hover { 
+            transition: transform 0.2s; 
+        }
+        
+        .card-hover:hover { 
+            transform: translateY(-2px); 
+        }
+        
+        .sentiment-positive { 
+            color: #10b981; 
+        }
+        
+        .sentiment-negative { 
+            color: #ef4444; 
+        }
+        
+        .sentiment-neutral { 
+            color: #6b7280; 
+        }
+    </style>
+</head>
+<body class="bg-gray-50 theme-light">
+    <!-- Navigation Header -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <i class="fas fa-star text-yellow-300 text-xl"></i>
+                    <h1 class="text-xl font-bold">ReviewAssist Pro Enhanced</h1>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Real-time Status -->
+                    <div class="relative" id="realtimeStatus">
+                        <div id="connectionStatus" class="flex items-center space-x-2 px-3 py-1 rounded-lg bg-white bg-opacity-20">
+                            <div id="statusIndicator" class="w-2 h-2 rounded-full bg-green-400"></div>
+                            <span id="statusText" class="text-sm">Live</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Theme Toggle -->
+                    <button id="themeToggle" class="p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                    
+                    <!-- Notifications -->
+                    <div class="relative" id="notificationDropdown">
+                        <button id="notificationBtn" class="p-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-colors relative">
+                            <i class="fas fa-bell"></i>
+                            <span id="notificationBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                        </button>
+                    </div>
+                    
+                    <!-- User Menu -->
+                    <div class="relative" id="userDropdown">
+                        <!-- Authenticated User -->
+                        <div id="authenticatedUser" class="hidden flex items-center space-x-3">
+                            <span id="welcomeText" class="text-sm">Welcome, Demo User</span>
+                            <div class="user-avatar" id="userAvatar">DU</div>
+                            <button id="userMenuBtn" class="p-1 rounded hover:bg-white hover:bg-opacity-20">
+                                <i class="fas fa-chevron-down text-sm"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Guest User -->
+                        <div id="guestUser" class="flex items-center space-x-2">
+                            <button id="loginBtn" class="px-4 py-2 bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30 transition-colors">
+                                Login
+                            </button>
+                            <button id="registerBtn" class="px-4 py-2 bg-white text-purple-600 rounded-lg hover:bg-gray-100 transition-colors">
+                                Register
+                            </button>
+                        </div>
+                        
+                        <!-- User Dropdown Menu -->
+                        <div id="userMenu" class="dropdown-menu">
+                            <div class="p-2">
+                                <div class="px-3 py-2 text-sm text-gray-700 border-b">
+                                    <div id="userFullName" class="font-medium">Demo User</div>
+                                    <div id="userEmail" class="text-gray-500">demo@example.com</div>
+                                    <div id="userRole" class="text-xs text-blue-600 mt-1">Agent</div>
+                                </div>
+                                <a href="#" id="profileBtn" class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-user mr-2"></i>Profile
+                                </a>
+                                <a href="#" id="settingsBtn" class="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-cog mr-2"></i>Settings
+                                </a>
+                                <div class="border-t mt-1 pt-1">
+                                    <button id="logoutBtn" class="block w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Demo Mode Indicator -->
+                    <button id="exitDemoBtn" class="px-3 py-1 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition-colors">
+                        <i class="fas fa-play mr-1"></i>Exit Demo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Demo Mode Banner -->
+    <div class="bg-blue-50 border-l-4 border-blue-400 p-4">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-blue-400"></i>
+            </div>
+            <div class="ml-3">
+                <p class="text-sm text-blue-700">
+                    <strong>Enhanced Demo Mode Active</strong> - Explore all new features including user authentication and real-time updates! 
+                    <span class="font-medium">Demo Credentials:</span> admin@reviewassist.com / Admin123!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Authentication Modals -->
+    <div id="authModal" class="auth-modal">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <!-- Login Form -->
+            <div id="loginForm" class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Login to ReviewAssist Pro</h3>
+                    <button id="closeAuthModal" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="loginFormElement">
+                    <div class="mb-4">
+                        <label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="loginEmail" name="email" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                               placeholder="Enter your email">
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="loginPassword" name="password" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                               placeholder="Enter your password">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">
+                        Login
+                    </button>
+                </form>
+                
+                <div class="mt-4 text-center">
+                    <p class="text-sm text-gray-600">
+                        Don't have an account? 
+                        <button id="showRegisterForm" class="text-purple-600 hover:text-purple-700 font-medium">Register here</button>
+                    </p>
+                </div>
+                
+                <div class="mt-4 p-3 bg-gray-50 rounded-md">
+                    <p class="text-xs text-gray-600 mb-2"><strong>Demo Credentials:</strong></p>
+                    <p class="text-xs text-gray-600">Admin: admin@reviewassist.com / Admin123!</p>
+                    <p class="text-xs text-gray-600">Manager: manager@reviewassist.com / Manager123!</p>
+                    <p class="text-xs text-gray-600">Agent: agent@reviewassist.com / Agent123!</p>
+                </div>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="registerForm" class="p-6 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Register for ReviewAssist Pro</h3>
+                    <button id="closeAuthModal2" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="registerFormElement">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="registerFirstName" class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                            <input type="text" id="registerFirstName" name="first_name" required 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                   placeholder="First name">
+                        </div>
+                        <div>
+                            <label for="registerLastName" class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                            <input type="text" id="registerLastName" name="last_name" required 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                   placeholder="Last name">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="registerEmail" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="registerEmail" name="email" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                               placeholder="Enter your email">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="registerPassword" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="registerPassword" name="password" required 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                               placeholder="Enter your password">
+                        <p class="text-xs text-gray-500 mt-1">Must be at least 8 characters with uppercase, lowercase, and number</p>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label for="registerRole" class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                        <select id="registerRole" name="role" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option value="agent">Agent</option>
+                            <option value="manager">Manager</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors">
+                        Register
+                    </button>
+                </form>
+                
+                <div class="mt-4 text-center">
+                    <p class="text-sm text-gray-600">
+                        Already have an account? 
+                        <button id="showLoginForm" class="text-purple-600 hover:text-purple-700 font-medium">Login here</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Dashboard Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Review Management Dashboard</h2>
+            <p class="text-gray-600">Comprehensive AI-powered review management with advanced analytics, user authentication, and real-time updates</p>
+        </div>
+
+        <!-- Analytics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Total Reviews</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalReviews">247</p>
+                        <p class="text-xs text-green-600">+12 from last month</p>
+                    </div>
+                    <div class="p-3 bg-blue-100 rounded-full">
+                        <i class="fas fa-comments text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Average Rating</p>
+                        <p class="text-2xl font-bold text-gray-900" id="averageRating">4.6</p>
+                        <p class="text-xs text-green-600">+0.2 from last month</p>
+                    </div>
+                    <div class="p-3 bg-yellow-100 rounded-full">
+                        <i class="fas fa-star text-yellow-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Response Rate</p>
+                        <p class="text-2xl font-bold text-gray-900" id="responseRate">89%</p>
+                        <p class="text-xs text-green-600">+5% from last month</p>
+                    </div>
+                    <div class="p-3 bg-green-100 rounded-full">
+                        <i class="fas fa-reply text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Avg Response Time</p>
+                        <p class="text-2xl font-bold text-gray-900" id="avgResponseTime">2.4h</p>
+                        <p class="text-xs text-red-600">+0.3h from last month</p>
+                    </div>
+                    <div class="p-3 bg-purple-100 rounded-full">
+                        <i class="fas fa-clock text-purple-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Analytics Section -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Advanced Analytics</h3>
+                <div class="flex space-x-4">
+                    <select id="analyticsTimeRange" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="7">Last 7 days</option>
+                        <option value="30" selected>Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="365">Last year</option>
+                    </select>
+                    <button id="generateInsights" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-brain mr-2"></i>Generate Insights
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Predictive Insights -->
+            <div id="predictiveInsights" class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 mb-6 hidden">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-crystal-ball text-purple-600 mr-2"></i>Predictive Insights
+                </h4>
+                <div id="insightsList" class="space-y-4">
+                    <!-- Insights will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Performance Benchmarks -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h4 class="text-lg font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-chart-line text-blue-600 mr-2"></i>Performance Benchmarks
+                </h4>
+                <div id="benchmarkCharts" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Benchmark charts will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Sentiment Analysis Trends</h3>
+                    <div class="flex space-x-2">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+                            <span class="text-sm text-gray-600">Positive</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-gray-400 rounded-full mr-2"></div>
+                            <span class="text-sm text-gray-600">Neutral</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
+                            <span class="text-sm text-gray-600">Negative</span>
+                        </div>
+                    </div>
+                </div>
+                <canvas id="sentimentChart" width="400" height="200"></canvas>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Platform Performance</h3>
+                    <div class="flex space-x-2">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+                            <span class="text-sm text-gray-600">Google</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
+                            <span class="text-sm text-gray-600">Yelp</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-blue-600 rounded-full mr-2"></div>
+                            <span class="text-sm text-gray-600">Facebook</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-600 rounded-full mr-2"></div>
+                            <span class="text-sm text-gray-600">TripAdvisor</span>
+                        </div>
+                    </div>
+                </div>
+                <canvas id="platformChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Advanced Reporting Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-file-chart-line text-blue-600 mr-2"></i>Advanced Reporting
+                </h3>
+                <div class="flex space-x-4">
+                    <select id="reportType" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="weekly">Weekly Report</option>
+                        <option value="monthly" selected>Monthly Report</option>
+                        <option value="quarterly">Quarterly Report</option>
+                        <option value="yearly">Yearly Report</option>
+                    </select>
+                    <select id="reportFormat" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="pdf">PDF Report</option>
+                        <option value="xlsx">Excel Report</option>
+                        <option value="csv">CSV Export</option>
+                    </select>
+                    <button id="generateAdvancedReport" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>Generate Report
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Report History -->
+            <div id="reportHistory" class="mt-6">
+                <h4 class="text-md font-semibold text-gray-900 mb-4">Recent Reports</h4>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Generated</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Downloads</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportHistoryBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Report history will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Automation & Workflows Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-robot text-purple-600 mr-2"></i>Automation & Workflows
+                </h3>
+                <div class="flex space-x-4">
+                    <button id="createWorkflowBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Create Workflow
+                    </button>
+                    <button id="createRuleBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-cogs mr-2"></i>Create Rule
+                    </button>
+                    <button id="scheduleReportBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-calendar-alt mr-2"></i>Schedule Report
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Automation Dashboard -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="bg-purple-50 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-purple-600">Active Workflows</p>
+                            <p class="text-2xl font-bold text-purple-900" id="activeWorkflows">3</p>
+                        </div>
+                        <div class="p-2 bg-purple-100 rounded-full">
+                            <i class="fas fa-play text-purple-600"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-indigo-50 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-indigo-600">Automation Rules</p>
+                            <p class="text-2xl font-bold text-indigo-900" id="automationRules">5</p>
+                        </div>
+                        <div class="p-2 bg-indigo-100 rounded-full">
+                            <i class="fas fa-cogs text-indigo-600"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-blue-600">Scheduled Reports</p>
+                            <p class="text-2xl font-bold text-blue-900" id="scheduledReports">2</p>
+                        </div>
+                        <div class="p-2 bg-blue-100 rounded-full">
+                            <i class="fas fa-calendar-alt text-blue-600"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-green-50 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-green-600">Tasks Today</p>
+                            <p class="text-2xl font-bold text-green-900" id="tasksToday">12</p>
+                        </div>
+                        <div class="p-2 bg-green-100 rounded-full">
+                            <i class="fas fa-tasks text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Workflow Templates -->
+            <div class="mb-6">
+                <h4 class="text-md font-semibold text-gray-900 mb-4">Quick Start Templates</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="border border-gray-200 rounded-lg p-4 hover:border-purple-300 transition-colors cursor-pointer" data-template="auto_response">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-robot text-purple-600 mr-2"></i>
+                            <h5 class="font-semibold text-gray-900">Auto Response</h5>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Automatically generate AI responses for new reviews</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">Event Trigger</span>
+                            <button class="text-purple-600 hover:text-purple-800 text-sm font-medium">Use Template</button>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition-colors cursor-pointer" data-template="weekly_report">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-chart-line text-blue-600 mr-2"></i>
+                            <h5 class="font-semibold text-gray-900">Weekly Reports</h5>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Generate and email weekly performance reports</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Scheduled</span>
+                            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">Use Template</button>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg p-4 hover:border-red-300 transition-colors cursor-pointer" data-template="urgent_alert">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-exclamation-triangle text-red-600 mr-2"></i>
+                            <h5 class="font-semibold text-gray-900">Urgent Alerts</h5>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">Send alerts for low-rated reviews requiring attention</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">Alert Rule</span>
+                            <button class="text-red-600 hover:text-red-800 text-sm font-medium">Use Template</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div>
+                <h4 class="text-md font-semibold text-gray-900 mb-4">Recent Automation Activity</h4>
+                <div class="space-y-3" id="automationActivity">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Auto Response Generated</p>
+                                <p class="text-xs text-gray-500">Workflow: "Auto Response for Google Reviews" • 2 minutes ago</p>
+                            </div>
+                        </div>
+                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Completed</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Weekly Report Generated</p>
+                                <p class="text-xs text-gray-500">Scheduled Report: "Weekly Performance Summary" • 1 hour ago</p>
+                            </div>
+                        </div>
+                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Completed</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">Alert Rule Triggered</p>
+                                <p class="text-xs text-gray-500">Rule: "Low Rating Alert" • 3 hours ago</p>
+                            </div>
+                        </div>
+                        <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Pending</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Review Management Section -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-semibold text-gray-900">Review Management</h3>
+                <div class="flex space-x-2">
+                    <button id="bulkResponseBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        <i class="fas fa-robot mr-2"></i>Bulk AI Response
+                    </button>
+                    <button id="exportCsvBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-download mr-2"></i>Export CSV
+                    </button>
+                    <button id="generateReportBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-file-pdf mr-2"></i>Generate Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sample Reviews -->
+            <div class="space-y-4" id="reviewsList">
+                <!-- Reviews will be loaded here -->
+            </div>
+
+            <!-- Pagination -->
+            <div class="flex justify-between items-center mt-6">
+                <p class="text-sm text-gray-600">Showing 1 to 3 of 247 reviews</p>
+                <div class="flex space-x-2">
+                    <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">Previous</button>
+                    <button class="px-3 py-1 bg-purple-600 text-white rounded">1</button>
+                    <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">2</button>
+                    <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">3</button>
+                    <button class="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Response Templates Section -->
+        <div class="bg-white rounded-lg shadow-md p-6 mt-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-6">AI Response Templates</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Positive Review Template -->
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">Positive Review Template</h4>
+                    <p class="text-sm text-gray-600 mb-4">For 4-5 star reviews with positive sentiment</p>
+                    <button class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        Use Template
+                    </button>
+                </div>
+
+                <!-- Constructive Feedback Template -->
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">Constructive Feedback Template</h4>
+                    <p class="text-sm text-gray-600 mb-4">For 2-3 star reviews with improvement suggestions</p>
+                    <button class="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
+                        Use Template
+                    </button>
+                </div>
+
+                <!-- Service Recovery Template -->
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-900 mb-2">Service Recovery Template</h4>
+                    <p class="text-sm text-gray-600 mb-4">For 1-2 star reviews requiring immediate attention</p>
+                    <button class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        Use Template
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Authentication state management
+        let currentUser = null;
+        let authToken = localStorage.getItem('authToken');
+        let socket = null;
+        let connectionStatus = 'disconnected';
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAuth();
+            initializeWebSocket();
+            initializeCharts();
+            loadReviews();
+            setupEventListeners();
+        });
+
+        // WebSocket initialization and management
+        function initializeWebSocket() {
+            try {
+                // Initialize Socket.IO connection
+                socket = io({
+                    auth: {
+                        token: authToken
+                    },
+                    transports: ['websocket', 'polling']
+                });
+
+                // Connection event handlers
+                socket.on('connect', function() {
+                    console.log('WebSocket connected');
+                    updateConnectionStatus('connected');
+                });
+
+                socket.on('disconnect', function() {
+                    console.log('WebSocket disconnected');
+                    updateConnectionStatus('disconnected');
+                });
+
+                socket.on('connection_established', function(data) {
+                    console.log('Connection established:', data);
+                    updateConnectionStatus('authenticated');
+                    if (data.user) {
+                        showNotification(`Welcome back, ${data.user.first_name}!`, 'success');
+                    }
+                });
+
+                // Real-time notification handlers
+                socket.on('new_notification', function(notification) {
+                    console.log('New notification:', notification);
+                    showRealtimeNotification(notification);
+                    updateNotificationBadge();
+                });
+
+                socket.on('unread_notifications', function(data) {
+                    console.log('Unread notifications:', data);
+                    updateNotificationBadge(data.count);
+                });
+
+                // Live metrics updates
+                socket.on('live_metrics_update', function(metrics) {
+                    console.log('Live metrics update:', metrics);
+                    updateLiveMetrics(metrics);
+                });
+
+                // User status updates
+                socket.on('user_status_update', function(data) {
+                    console.log('User status update:', data);
+                    showNotification(`${data.user_name} is now ${data.status}`, 'info');
+                });
+
+                // Error handling
+                socket.on('error', function(error) {
+                    console.error('WebSocket error:', error);
+                    showNotification('Connection error: ' + error.message, 'error');
+                });
+
+                // Request initial metrics
+                setTimeout(() => {
+                    if (socket.connected) {
+                        socket.emit('request_live_metrics');
+                    }
+                }, 1000);
+
+            } catch (error) {
+                console.error('Failed to initialize WebSocket:', error);
+                updateConnectionStatus('error');
+            }
+        }
+
+        function updateConnectionStatus(status) {
+            connectionStatus = status;
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            
+            switch (status) {
+                case 'connected':
+                case 'authenticated':
+                    indicator.className = 'w-2 h-2 rounded-full bg-green-400';
+                    statusText.textContent = 'Live';
+                    break;
+                case 'disconnected':
+                    indicator.className = 'w-2 h-2 rounded-full bg-yellow-400';
+                    statusText.textContent = 'Offline';
+                    break;
+                case 'error':
+                    indicator.className = 'w-2 h-2 rounded-full bg-red-400';
+                    statusText.textContent = 'Error';
+                    break;
+                default:
+                    indicator.className = 'w-2 h-2 rounded-full bg-gray-400';
+                    statusText.textContent = 'Unknown';
+            }
+        }
+
+        function showRealtimeNotification(notification) {
+            // Create a more prominent real-time notification
+            const toast = document.createElement('div');
+            toast.className = 'notification-toast info show';
+            toast.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="font-semibold">${notification.title}</div>
+                        <div class="text-sm mt-1">${notification.message}</div>
+                        ${notification.data ? `<div class="text-xs mt-2 opacity-75">${JSON.stringify(notification.data)}</div>` : ''}
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            // Auto-remove after 8 seconds for real-time notifications
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 8000);
+
+            // Mark as read after showing
+            if (socket && socket.connected) {
+                socket.emit('mark_notification_read', { notification_id: notification.id });
+            }
+        }
+
+        function updateNotificationBadge(count = null) {
+            const badge = document.getElementById('notificationBadge');
+            if (count !== null && count > 0) {
+                badge.textContent = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function updateLiveMetrics(metrics) {
+            // Update dashboard metrics with real-time data
+            if (metrics.total_reviews !== undefined) {
+                document.getElementById('totalReviews').textContent = metrics.total_reviews;
+            }
+            if (metrics.avg_rating !== undefined) {
+                document.getElementById('averageRating').textContent = metrics.avg_rating;
+            }
+            if (metrics.response_rate !== undefined) {
+                document.getElementById('responseRate').textContent = metrics.response_rate + '%';
+            }
+            
+            // Show a subtle indicator that data was updated
+            const cards = document.querySelectorAll('.card-hover');
+            cards.forEach(card => {
+                card.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+                setTimeout(() => {
+                    card.style.boxShadow = '';
+                }, 1000);
+            });
+        }
+
+        // Advanced Analytics Functions
+        function loadAdvancedAnalytics() {
+            const timeRange = document.getElementById('analyticsTimeRange').value;
+            
+            fetch(`/api/analytics/dashboard-data?days=${timeRange}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateAdvancedDashboard(data.data);
+                } else {
+                    showNotification('Failed to load analytics data', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading analytics:', error);
+                showNotification('Error loading analytics data', 'error');
+            });
+        }
+
+        function updateAdvancedDashboard(data) {
+            // Update overview metrics
+            if (data.overview) {
+                document.getElementById('totalReviews').textContent = data.overview.total_reviews;
+                document.getElementById('averageRating').textContent = data.overview.average_rating;
+                document.getElementById('responseRate').textContent = data.overview.response_rate + '%';
+            }
+
+            // Update benchmarks
+            if (data.benchmarks && data.benchmarks.length > 0) {
+                displayBenchmarks(data.benchmarks);
+            }
+
+            // Update insights
+            if (data.insights && data.insights.length > 0) {
+                displayInsights(data.insights);
+            }
+        }
+
+        function displayBenchmarks(benchmarks) {
+            const container = document.getElementById('benchmarkCharts');
+            container.innerHTML = '';
+
+            benchmarks.forEach(benchmark => {
+                const benchmarkCard = document.createElement('div');
+                benchmarkCard.className = 'bg-gray-50 rounded-lg p-4';
+                
+                const performance = calculatePerformance(benchmark.our_current_value, benchmark.industry_average);
+                const performanceColor = performance >= 0 ? 'text-green-600' : 'text-red-600';
+                const performanceIcon = performance >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                
+                benchmarkCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <h5 class="font-semibold text-gray-900">${benchmark.metric_name}</h5>
+                        <span class="${performanceColor}">
+                            <i class="fas ${performanceIcon} mr-1"></i>${Math.abs(performance).toFixed(1)}%
+                        </span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Our Performance:</span>
+                            <span class="font-medium">${benchmark.our_current_value}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Industry Average:</span>
+                            <span>${benchmark.industry_average || 'N/A'}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Top Quartile:</span>
+                            <span>${benchmark.top_quartile || 'N/A'}</span>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(benchmarkCard);
+            });
+        }
+
+        function displayInsights(insights) {
+            const container = document.getElementById('insightsList');
+            const insightsSection = document.getElementById('predictiveInsights');
+            
+            container.innerHTML = '';
+            
+            insights.forEach(insight => {
+                const insightCard = document.createElement('div');
+                insightCard.className = 'bg-white rounded-lg p-4 border border-purple-200';
+                
+                const confidenceColor = insight.confidence_score >= 0.8 ? 'text-green-600' : 
+                                       insight.confidence_score >= 0.6 ? 'text-yellow-600' : 'text-red-600';
+                
+                insightCard.innerHTML = `
+                    <div class="flex items-start justify-between mb-2">
+                        <h5 class="font-semibold text-gray-900">${insight.title}</h5>
+                        <span class="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-800">
+                            ${(insight.confidence_score * 100).toFixed(0)}% confidence
+                        </span>
+                    </div>
+                    <p class="text-gray-700 text-sm mb-3">${insight.description}</p>
+                    ${insight.action_recommendations ? `
+                        <div class="mt-3">
+                            <h6 class="text-xs font-semibold text-gray-600 mb-2">RECOMMENDATIONS:</h6>
+                            <ul class="text-xs text-gray-600 space-y-1">
+                                ${insight.action_recommendations.map(rec => `<li>• ${rec}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                `;
+                
+                container.appendChild(insightCard);
+            });
+            
+            insightsSection.classList.remove('hidden');
+        }
+
+        function calculatePerformance(current, benchmark) {
+            if (!benchmark || benchmark === 0) return 0;
+            return ((current - benchmark) / benchmark) * 100;
+        }
+
+        function generateInsights() {
+            const button = document.getElementById('generateInsights');
+            const originalText = button.innerHTML;
+            
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+            button.disabled = true;
+            
+            fetch('/api/analytics/generate-insights', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(`Generated ${data.data.insights_generated} new insights!`, 'success');
+                    displayInsights(data.data.insights);
+                } else {
+                    showNotification('Failed to generate insights', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error generating insights:', error);
+                showNotification('Error generating insights', 'error');
+            })
+            .finally(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+        }
+
+        function generateAdvancedReport() {
+            const reportType = document.getElementById('reportType').value;
+            const reportFormat = document.getElementById('reportFormat').value;
+            const button = document.getElementById('generateAdvancedReport');
+            
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+            button.disabled = true;
+            
+            fetch('/api/analytics/generate-report', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    report_type: reportType,
+                    format: reportFormat
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Report generated successfully!', 'success');
+                    // Trigger download
+                    window.open(data.data.download_url, '_blank');
+                    // Refresh report history
+                    loadReportHistory();
+                } else {
+                    showNotification('Failed to generate report', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error generating report:', error);
+                showNotification('Error generating report', 'error');
+            })
+            .finally(() => {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+        }
+
+        function loadReportHistory() {
+            // This would load recent reports from the server
+            // For demo purposes, we'll show some sample data
+            const tbody = document.getElementById('reportHistoryBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Monthly Report - August 2025</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">PDF</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2 hours ago</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button class="text-blue-600 hover:text-blue-900 mr-3">Download</button>
+                        <button class="text-red-600 hover:text-red-900">Delete</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Weekly Report - Week 33</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Excel</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1 day ago</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button class="text-blue-600 hover:text-blue-900 mr-3">Download</button>
+                        <button class="text-red-600 hover:text-red-900">Delete</button>
+                    </td>
+                </tr>
+            `;
+        }
+        function simulateRealtimeEvents() {
+            if (!socket || !socket.connected) return;
+            
+            // Simulate new review every 30 seconds
+            setInterval(() => {
+                if (Math.random() > 0.7) { // 30% chance
+                    const platforms = ['Google', 'Yelp', 'Facebook', 'TripAdvisor'];
+                    const ratings = [3, 4, 5];
+                    const platform = platforms[Math.floor(Math.random() * platforms.length)];
+                    const rating = ratings[Math.floor(Math.random() * ratings.length)];
+                    
+                    showRealtimeNotification({
+                        id: Date.now(),
+                        title: 'New Review Received',
+                        message: `A new ${rating}-star review has been posted on ${platform}`,
+                        data: { platform, rating, timestamp: new Date().toISOString() }
+                    });
+                }
+            }, 30000);
+            
+            // Simulate metrics updates every 15 seconds
+            setInterval(() => {
+                if (socket && socket.connected) {
+                    socket.emit('request_live_metrics');
+                }
+            }, 15000);
+        }
+
+        // Authentication functions
+        function initializeAuth() {
+            if (authToken) {
+                // Verify token and get user info
+                fetch('/api/auth/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.user) {
+                        setAuthenticatedUser(data.user);
+                    } else {
+                        logout();
+                    }
+                })
+                .catch(() => {
+                    logout();
+                });
+            } else {
+                showGuestUser();
+            }
+        }
+
+        function setAuthenticatedUser(user) {
+            currentUser = user;
+            document.getElementById('authenticatedUser').classList.remove('hidden');
+            document.getElementById('guestUser').classList.add('hidden');
+            
+            document.getElementById('welcomeText').textContent = `Welcome, ${user.first_name}`;
+            document.getElementById('userAvatar').textContent = user.first_name.charAt(0) + user.last_name.charAt(0);
+            document.getElementById('userFullName').textContent = user.full_name;
+            document.getElementById('userEmail').textContent = user.email;
+            document.getElementById('userRole').textContent = user.role.charAt(0).toUpperCase() + user.role.slice(1);
+        }
+
+        function showGuestUser() {
+            currentUser = null;
+            document.getElementById('authenticatedUser').classList.add('hidden');
+            document.getElementById('guestUser').classList.remove('hidden');
+        }
+
+        function login(email, password) {
+            fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    setAuthenticatedUser(data.user);
+                    closeAuthModal();
+                    showNotification('Login successful!', 'success');
+                    
+                    // Reinitialize WebSocket with new token
+                    if (socket) {
+                        socket.disconnect();
+                    }
+                    initializeWebSocket();
+                    
+                    // Start real-time demo events
+                    setTimeout(simulateRealtimeEvents, 5000);
+                } else {
+                    showNotification(data.error || 'Login failed', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Login failed: ' + error.message, 'error');
+            });
+        }
+
+        function register(userData) {
+            fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.token) {
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    setAuthenticatedUser(data.user);
+                    closeAuthModal();
+                    showNotification('Registration successful!', 'success');
+                } else {
+                    showNotification(data.error || 'Registration failed', 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('Registration failed: ' + error.message, 'error');
+            });
+        }
+
+        function logout() {
+            authToken = null;
+            localStorage.removeItem('authToken');
+            showGuestUser();
+            showNotification('Logged out successfully', 'info');
+            
+            // Disconnect WebSocket and reinitialize as guest
+            if (socket) {
+                socket.disconnect();
+            }
+            initializeWebSocket();
+        }
+
+        // UI functions
+        function showNotification(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `notification-toast ${type}`;
+            toast.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        function showAuthModal(formType = 'login') {
+            document.getElementById('authModal').classList.add('show');
+            if (formType === 'login') {
+                document.getElementById('loginForm').classList.remove('hidden');
+                document.getElementById('registerForm').classList.add('hidden');
+            } else {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('registerForm').classList.remove('hidden');
+            }
+        }
+
+         function setupEventListeners() {
+            // Theme toggle
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            
+            // Authentication
+            document.getElementById('loginBtn').addEventListener('click', () => openAuthModal('login'));
+            document.getElementById('registerBtn').addEventListener('click', () => openAuthModal('register'));
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            
+            // Modal close buttons
+            document.querySelectorAll('.modal-close').forEach(btn => {
+                btn.addEventListener('click', closeAuthModal);
+            });
+            
+            // Form submissions
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            
+            // Review management
+            document.getElementById('bulkResponseBtn').addEventListener('click', generateBulkResponses);
+            document.getElementById('exportCsvBtn').addEventListener('click', exportToCSV);
+            document.getElementById('generateReportBtn').addEventListener('click', generateReport);
+            
+            // Advanced Analytics
+            document.getElementById('analyticsTimeRange').addEven            // Advanced Analytics Event Listeners
+            document.getElementById('generateInsightsBtn')?.addEventListener('click', generateInsights);
+            document.querySelector('[data-report-generate]')?.addEventListener('click', generateAdvancedReport);
+            
+            // Automation Event Listeners
+            document.getElementById('createWorkflowBtn')?.addEventListener('click', createWorkflow);
+            document.getElementById('createRuleBtn')?.addEventListener('click', createAutomationRule);
+            document.getElementById('scheduleReportBtn')?.addEventListener('click', scheduleReport);
+            
+            // Template Event Listeners
+            document.querySelectorAll('[data-template]').forEach(template => {
+                template.addEventListener('click', () => {
+                    const templateId = template.getAttribute('data-template');
+                    useWorkflowTemplate(templateId);
+                });
+            });
+            
+            // Load automation dashboard data
+            if (authToken) {
+                loadAutomationDashboard();
+            }   
+            // Load initial data
+            loadReportHistory();
+            
+            // Load advanced analytics if user is authenticated
+            if (authToken) {
+                setTimeout(loadAdvancedAnalytics, 1000);
+            }
+        }    });
+            
+            document.getElementById('registerFormElement').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const userData = {
+                    first_name: document.getElementById('registerFirstName').value,
+                    last_name: document.getElementById('registerLastName').value,
+                    email: document.getElementById('registerEmail').value,
+                    password: document.getElementById('registerPassword').value,
+                    role: document.getElementById('registerRole').value
+                };
+                register(userData);
+            });
+            
+            // User menu
+            document.getElementById('userMenuBtn').addEventListener('click', function() {
+                document.getElementById('userMenu').classList.toggle('show');
+            });
+            
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#userDropdown')) {
+                    document.getElementById('userMenu').classList.remove('show');
+                }
+            });
+            
+            // Theme toggle
+            document.getElementById('themeToggle').addEventListener('click', function() {
+                document.body.classList.toggle('theme-dark');
+                const icon = document.getElementById('themeIcon');
+                if (document.body.classList.contains('theme-dark')) {
+                    icon.className = 'fas fa-sun';
+                } else {
+                    icon.className = 'fas fa-moon';
+                }
+            });
+        }
+
+        // Chart initialization
+        function initializeCharts() {
+            // Sentiment Analysis Chart
+            const sentimentCtx = document.getElementById('sentimentChart').getContext('2d');
+            new Chart(sentimentCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [
+                        {
+                            label: 'Positive',
+                            data: [65, 70, 68, 75, 72, 78],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Neutral',
+                            data: [25, 22, 28, 20, 23, 18],
+                            borderColor: '#6b7280',
+                            backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Negative',
+                            data: [10, 8, 4, 5, 5, 4],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Platform Performance Chart
+            const platformCtx = document.getElementById('platformChart').getContext('2d');
+            new Chart(platformCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Google', 'Yelp', 'Facebook', 'TripAdvisor'],
+                    datasets: [{
+                        data: [4.8, 4.5, 4.3, 4.6],
+                        backgroundColor: [
+                            '#4285f4',
+                            '#ff6b35',
+                            '#1877f2',
+                            '#00af87'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load reviews
+        function loadReviews() {
+            const reviewsList = document.getElementById('reviewsList');
+            const sampleReviews = [
+                {
+                    platform: 'Google',
+                    author: 'John D.',
+                    sentiment: 'Positive',
+                    date: '2025-08-10',
+                    status: 'Responded',
+                    content: 'Excellent service! The staff was very helpful and professional. The food was outstanding and the atmosphere was perfect for our anniversary dinner.',
+                    responseTime: '1.2h'
+                },
+                {
+                    platform: 'Yelp',
+                    author: 'Sarah M.',
+                    sentiment: 'Neutral',
+                    date: '2025-08-09',
+                    status: 'Pending',
+                    content: 'Good experience overall. Food was great, service could be faster. The wait time was a bit long but the quality made up for it.',
+                    responseTime: '2.1h'
+                },
+                {
+                    platform: 'Facebook',
+                    author: 'Mike R.',
+                    sentiment: 'Negative',
+                    date: '2025-08-08',
+                    status: 'Urgent',
+                    content: 'Disappointing experience. The food was cold when it arrived and the service was inattentive. Expected much better based on the reviews.',
+                    responseTime: '18.3h'
+                }
+            ];
+
+            reviewsList.innerHTML = sampleReviews.map(review => `
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${getPlatformColor(review.platform)}">${review.platform}</span>
+                            <span class="text-sm font-medium">by ${review.author}</span>
+                            <span class="text-sm ${getSentimentColor(review.sentiment)}">${review.sentiment}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-500">${review.date}</span>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(review.status)}">${review.status}</span>
+                        </div>
+                    </div>
+                    
+                    <p class="text-gray-700 mb-4">${review.content}</p>
+                    
+                    <div class="flex justify-between items-center">
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 bg-purple-600 text-white text-sm rounded hover:bg-purple-700">
+                                Generate Response
+                            </button>
+                            ${review.status === 'Responded' ? 
+                                '<button class="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700">View Response</button>' :
+                                '<span class="px-3 py-1 bg-gray-100 text-gray-500 text-sm rounded">No Response</span>'
+                            }
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            ${review.status === 'Responded' ? `Response time: ${review.responseTime}` : 
+                              review.status === 'Pending' ? `Pending for: ${review.responseTime}` :
+                              `Overdue: ${review.responseTime}`}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Automation Functions
+        async function loadAutomationDashboard() {
+            try {
+                const response = await fetch('/api/automation/dashboard', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateAutomationStats(data.data.statistics);
+                    updateAutomationActivity(data.data.recent_tasks);
+                }
+            } catch (error) {
+                console.error('Error loading automation dashboard:', error);
+            }
+        }
+        
+        function updateAutomationStats(stats) {
+            document.getElementById('activeWorkflows').textContent = stats.active_workflows;
+            document.getElementById('automationRules').textContent = stats.active_rules;
+            document.getElementById('scheduledReports').textContent = stats.scheduled_reports;
+            document.getElementById('tasksToday').textContent = stats.active_workflows + stats.active_rules;
+        }
+        
+        function updateAutomationActivity(tasks) {
+            const container = document.getElementById('automationActivity');
+            if (!container || !tasks.length) return;
+            
+            container.innerHTML = tasks.slice(0, 3).map(task => {
+                const statusColor = task.status === 'completed' ? 'green' : 
+                                  task.status === 'failed' ? 'red' : 'yellow';
+                
+                return `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-${statusColor}-500 rounded-full mr-3"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">${task.action_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                                <p class="text-xs text-gray-500">Task: ${task.task_id} • ${formatTimeAgo(task.created_at)}</p>
+                            </div>
+                        </div>
+                        <span class="text-xs bg-${statusColor}-100 text-${statusColor}-800 px-2 py-1 rounded-full capitalize">${task.status}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        async function createWorkflow() {
+            showToast('Workflow creation feature coming soon!', 'info');
+            // TODO: Implement workflow creation modal
+        }
+        
+        async function createAutomationRule() {
+            showToast('Automation rule creation feature coming soon!', 'info');
+            // TODO: Implement automation rule creation modal
+        }
+        
+        async function scheduleReport() {
+            showToast('Report scheduling feature coming soon!', 'info');
+            // TODO: Implement report scheduling modal
+        }
+        
+        async function useWorkflowTemplate(templateId) {
+            try {
+                showToast('Loading workflow template...', 'info');
+                
+                const response = await fetch('/api/automation/templates', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const template = data.data.find(t => t.id === templateId);
+                    if (template) {
+                        showToast(`Template "${template.name}" loaded! Customize and save to create workflow.`, 'success');
+                        // TODO: Open workflow creation modal with template data
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading template:', error);
+                showToast('Error loading template', 'error');
+            }
+        }
+        
+        function formatTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+            return `${Math.floor(diffInSeconds / 86400)} days ago`;
+        }
+
+        // Helper functions
+        function getPlatformColor(platform) {
+            const colors = {
+                'Google': 'bg-blue-100 text-blue-800',
+                'Yelp': 'bg-red-100 text-red-800',
+                'Facebook': 'bg-blue-100 text-blue-800',
+                'TripAdvisor': 'bg-green-100 text-green-800'
+            };
+            return colors[platform] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getSentimentColor(sentiment) {
+            const colors = {
+                'Positive': 'sentiment-positive',
+                'Negative': 'sentiment-negative',
+                'Neutral': 'sentiment-neutral'
+            };
+            return colors[sentiment] || 'text-gray-500';
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'Responded': 'bg-green-100 text-green-800',
+                'Pending': 'bg-yellow-100 text-yellow-800',
+                'Urgent': 'bg-red-100 text-red-800'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        }
+    </script>
+</body>
+</html>
+

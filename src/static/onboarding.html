@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onboarding & UX - ReviewAssist Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .tour-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            display: none;
+        }
+        
+        .tour-tooltip {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-width: 300px;
+            z-index: 10000;
+        }
+        
+        .tour-highlight {
+            position: absolute;
+            border: 3px solid #3b82f6;
+            border-radius: 8px;
+            background: rgba(59, 130, 246, 0.1);
+            z-index: 9998;
+            pointer-events: none;
+        }
+        
+        .widget-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+            min-height: 400px;
+        }
+        
+        .widget-item {
+            background: white;
+            border: 2px dashed #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: move;
+            transition: all 0.2s;
+        }
+        
+        .widget-item:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+        
+        .widget-item.occupied {
+            border-style: solid;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .announcement-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .announcement-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .keyboard-shortcut {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-xl font-bold text-indigo-600">
+                        <i class="fas fa-star mr-2"></i>ReviewAssist Pro
+                    </a>
+                    <div class="hidden md:ml-6 md:flex md:space-x-8">
+                        <a href="/" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Dashboard</a>
+                        <a href="/pricing.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Pricing</a>
+                        <a href="/integrations.html" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Integrations</a>
+                        <a href="/onboarding.html" class="text-indigo-600 hover:text-indigo-700 px-3 py-2 text-sm font-medium">Onboarding</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="loginBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" x-data="onboardingApp()">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-8 rounded-lg">
+                <h1 class="text-3xl font-bold mb-2">Onboarding & User Experience</h1>
+                <p class="text-indigo-100">Customize your experience and learn how to use ReviewAssist Pro effectively</p>
+            </div>
+        </div>
+
+        <!-- Feature Announcements -->
+        <div x-show="announcements.length > 0" class="mb-8">
+            <template x-for="announcement in announcements" :key="announcement.id">
+                <div x-show="!announcement.user_view.dismissed" class="announcement-banner">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-bullhorn mr-3"></i>
+                            <div>
+                                <h3 class="font-semibold" x-text="announcement.title"></h3>
+                                <p class="text-sm opacity-90" x-text="announcement.content"></p>
+                            </div>
+                        </div>
+                        <button @click="dismissAnnouncement(announcement.id)" class="text-white hover:text-gray-200">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mb-8">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <button @click="activeTab = 'onboarding'" 
+                            :class="activeTab === 'onboarding' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-rocket mr-2"></i>Onboarding
+                    </button>
+                    <button @click="activeTab = 'tours'" 
+                            :class="activeTab === 'tours' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-route mr-2"></i>Product Tours
+                    </button>
+                    <button @click="activeTab = 'dashboard'" 
+                            :class="activeTab === 'dashboard' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-th-large mr-2"></i>Dashboard
+                    </button>
+                    <button @click="activeTab = 'preferences'" 
+                            :class="activeTab === 'preferences' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-cog mr-2"></i>Preferences
+                    </button>
+                    <button @click="activeTab = 'shortcuts'" 
+                            :class="activeTab === 'shortcuts' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-keyboard mr-2"></i>Quick Actions
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Onboarding Tab -->
+        <div x-show="activeTab === 'onboarding'" class="space-y-6">
+            <!-- Onboarding Progress -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold">Your Onboarding Progress</h2>
+                    <span class="text-sm text-gray-500" x-text="`${onboardingStatus.current_step}/${onboardingStatus.total_steps} steps completed`"></span>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-6">
+                    <div class="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+                         :style="`width: ${onboardingStatus.progress_percentage}%`"></div>
+                </div>
+                
+                <!-- Status Badge -->
+                <div class="flex items-center mb-6">
+                    <span :class="{
+                        'bg-yellow-100 text-yellow-800': onboardingStatus.status === 'in_progress',
+                        'bg-green-100 text-green-800': onboardingStatus.status === 'completed',
+                        'bg-gray-100 text-gray-800': onboardingStatus.status === 'not_started',
+                        'bg-blue-100 text-blue-800': onboardingStatus.status === 'skipped'
+                    }" class="px-3 py-1 rounded-full text-sm font-medium">
+                        <i class="fas fa-circle mr-1 text-xs"></i>
+                        <span x-text="onboardingStatus.status.replace('_', ' ').toUpperCase()"></span>
+                    </span>
+                </div>
+                
+                <!-- Next Steps -->
+                <div x-show="nextSteps.length > 0">
+                    <h3 class="text-lg font-medium mb-4">Next Steps</h3>
+                    <div class="space-y-3">
+                        <template x-for="step in nextSteps" :key="step.id">
+                            <div class="flex items-center p-4 bg-gray-50 rounded-lg">
+                                <div :class="{
+                                    'bg-red-100 text-red-600': step.priority === 'high',
+                                    'bg-yellow-100 text-yellow-600': step.priority === 'medium',
+                                    'bg-blue-100 text-blue-600': step.priority === 'low'
+                                }" class="w-10 h-10 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-check text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-medium" x-text="step.title"></h4>
+                                    <p class="text-sm text-gray-600" x-text="step.description"></p>
+                                </div>
+                                <button @click="completeStep(step.id)" 
+                                        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                                    Complete
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                
+                <!-- Onboarding Actions -->
+                <div class="flex space-x-4 mt-6">
+                    <button x-show="onboardingStatus.status === 'not_started'" 
+                            @click="startOnboarding()" 
+                            class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-play mr-2"></i>Start Onboarding
+                    </button>
+                    <button x-show="onboardingStatus.status === 'in_progress'" 
+                            @click="skipOnboarding()" 
+                            class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-forward mr-2"></i>Skip Onboarding
+                    </button>
+                    <button x-show="onboardingStatus.status === 'completed'" 
+                            @click="restartOnboarding()" 
+                            class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-redo mr-2"></i>Restart Onboarding
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Milestones -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4">Achievement Milestones</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <template x-for="(milestone, key) in onboardingStatus.milestones" :key="key">
+                        <div class="flex items-center p-4 border rounded-lg" 
+                             :class="milestone ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'">
+                            <div :class="milestone ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'" 
+                                 class="w-10 h-10 rounded-full flex items-center justify-center mr-3">
+                                <i :class="milestone ? 'fas fa-check' : 'fas fa-clock'" class="text-sm"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium" x-text="formatMilestoneName(key)"></h3>
+                                <p class="text-sm text-gray-600" x-text="milestone ? 'Completed' : 'Pending'"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Tours Tab -->
+        <div x-show="activeTab === 'tours'" class="space-y-6">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4">Available Product Tours</h2>
+                <p class="text-gray-600 mb-6">Take guided tours to learn about different features and capabilities.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="tour in availableTours" :key="tour.type">
+                        <div class="border rounded-lg p-6 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold" x-text="tour.title"></h3>
+                                <span x-show="tour.required" class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">Required</span>
+                            </div>
+                            
+                            <p class="text-gray-600 text-sm mb-4" x-text="tour.description"></p>
+                            
+                            <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                                <span><i class="fas fa-clock mr-1"></i><span x-text="tour.duration"></span></span>
+                                <span><i class="fas fa-list mr-1"></i><span x-text="tour.steps"></span> steps</span>
+                            </div>
+                            
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
+                                <div class="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+                                     :style="`width: ${tour.progress.progress_percentage}%`"></div>
+                            </div>
+                            
+                            <!-- Status and Action -->
+                            <div class="flex items-center justify-between">
+                                <span :class="{
+                                    'text-yellow-600': tour.progress.status === 'in_progress',
+                                    'text-green-600': tour.progress.status === 'completed',
+                                    'text-gray-600': tour.progress.status === 'not_started'
+                                }" class="text-sm font-medium">
+                                    <span x-text="tour.progress.status.replace('_', ' ')"></span>
+                                </span>
+                                
+                                <button @click="startTour(tour.type)" 
+                                        :class="{
+                                            'bg-green-600 hover:bg-green-700': tour.progress.status === 'completed',
+                                            'bg-yellow-600 hover:bg-yellow-700': tour.progress.status === 'in_progress',
+                                            'bg-indigo-600 hover:bg-indigo-700': tour.progress.status === 'not_started'
+                                        }"
+                                        class="text-white px-4 py-2 rounded-lg transition-colors text-sm">
+                                    <span x-text="tour.progress.status === 'completed' ? 'Retake' : tour.progress.status === 'in_progress' ? 'Continue' : 'Start'"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Customization Tab -->
+        <div x-show="activeTab === 'dashboard'" class="space-y-6">
+            <!-- Dashboard Layouts -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold">Dashboard Layouts</h2>
+                    <button @click="createNewLayout()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Create Layout
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="layout in dashboardLayouts" :key="layout.id">
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow" 
+                             :class="layout.is_default ? 'border-indigo-200 bg-indigo-50' : 'border-gray-200'">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-semibold" x-text="layout.name"></h3>
+                                <span x-show="layout.is_default" class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">Default</span>
+                            </div>
+                            
+                            <p class="text-gray-600 text-sm mb-4" x-text="layout.description"></p>
+                            
+                            <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                                <span><i class="fas fa-eye mr-1"></i><span x-text="layout.usage_count"></span> uses</span>
+                                <span x-show="layout.last_used_at"><i class="fas fa-clock mr-1"></i>Last used</span>
+                            </div>
+                            
+                            <div class="flex space-x-2">
+                                <button @click="useLayout(layout.id)" 
+                                        class="flex-1 bg-indigo-600 text-white px-3 py-2 rounded text-sm hover:bg-indigo-700 transition-colors">
+                                    Use Layout
+                                </button>
+                                <button @click="editLayout(layout.id)" 
+                                        class="bg-gray-600 text-white px-3 py-2 rounded text-sm hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+            
+            <!-- Widget Customization -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4">Customize Dashboard</h2>
+                <p class="text-gray-600 mb-6">Drag and drop widgets to customize your dashboard layout.</p>
+                
+                <div class="widget-grid">
+                    <!-- Widget grid will be populated dynamically -->
+                    <template x-for="i in 24" :key="i">
+                        <div class="widget-item" @click="addWidget(i)">
+                            <i class="fas fa-plus text-gray-400"></i>
+                        </div>
+                    </template>
+                </div>
+                
+                <div class="mt-6 flex space-x-4">
+                    <button @click="saveLayout()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>Save Layout
+                    </button>
+                    <button @click="resetLayout()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-undo mr-2"></i>Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preferences Tab -->
+        <div x-show="activeTab === 'preferences'" class="space-y-6">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-6">User Preferences</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- UI Preferences -->
+                    <div>
+                        <h3 class="text-lg font-medium mb-4">Interface</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Theme</label>
+                                <select x-model="preferences.theme" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                    <option value="light">Light</option>
+                                    <option value="dark">Dark</option>
+                                    <option value="auto">Auto</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Language</label>
+                                <select x-model="preferences.language" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                    <option value="en">English</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
+                                <select x-model="preferences.timezone" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                    <option value="UTC">UTC</option>
+                                    <option value="America/New_York">Eastern Time</option>
+                                    <option value="America/Chicago">Central Time</option>
+                                    <option value="America/Denver">Mountain Time</option>
+                                    <option value="America/Los_Angeles">Pacific Time</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notification Preferences -->
+                    <div>
+                        <h3 class="text-lg font-medium mb-4">Notifications</h3>
+                        <div class="space-y-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="preferences.notifications.email" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">Email notifications</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="preferences.notifications.push" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">Push notifications</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="preferences.notifications.desktop" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">Desktop notifications</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="preferences.notifications.sound" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">Notification sounds</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Feature Preferences -->
+                    <div>
+                        <h3 class="text-lg font-medium mb-4">Features</h3>
+                        <div class="space-y-4">
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="preferences.features.keyboard_shortcuts" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">Keyboard shortcuts</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="preferences.features.advanced_mode" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">Advanced mode</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="preferences.features.beta_features" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">Beta features</span>
+                            </label>
+                            
+                            <label class="flex items-center">
+                                <input type="checkbox" x-model="preferences.features.analytics_tracking" class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="ml-2 text-sm text-gray-700">Analytics tracking</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Dashboard Preferences -->
+                    <div>
+                        <h3 class="text-lg font-medium mb-4">Dashboard</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Items per page</label>
+                                <select x-model="preferences.items_per_page" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Auto-refresh interval (seconds)</label>
+                                <select x-model="preferences.auto_refresh_interval" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                    <option value="60">1 minute</option>
+                                    <option value="300">5 minutes</option>
+                                    <option value="600">10 minutes</option>
+                                    <option value="1800">30 minutes</option>
+                                    <option value="0">Disabled</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 flex space-x-4">
+                    <button @click="savePreferences()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-save mr-2"></i>Save Preferences
+                    </button>
+                    <button @click="resetPreferences()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-undo mr-2"></i>Reset to Defaults
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Tab -->
+        <div x-show="activeTab === 'shortcuts'" class="space-y-6">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h2 class="text-xl font-semibold mb-4">Quick Actions & Keyboard Shortcuts</h2>
+                <p class="text-gray-600 mb-6">Boost your productivity with quick actions and keyboard shortcuts.</p>
+                
+                <!-- Quick Actions Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <template x-for="action in quickActions" :key="action.id">
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <i :class="`fas fa-${action.icon} text-indigo-600 mr-3`"></i>
+                                    <h3 class="font-semibold" x-text="action.title"></h3>
+                                </div>
+                                <button @click="toggleFavorite(action.id)" 
+                                        :class="action.is_favorite ? 'text-yellow-500' : 'text-gray-400'"
+                                        class="hover:text-yellow-500 transition-colors">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                            </div>
+                            
+                            <p class="text-gray-600 text-sm mb-3" x-text="action.description"></p>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="keyboard-shortcut" x-text="action.shortcut"></span>
+                                <button @click="executeAction(action.id)" 
+                                        class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition-colors">
+                                    Execute
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Keyboard Shortcuts Reference -->
+                <div class="border-t pt-6">
+                    <h3 class="text-lg font-medium mb-4">Keyboard Shortcuts Reference</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-medium mb-3">Navigation</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>Go to Dashboard</span>
+                                    <span class="keyboard-shortcut">Ctrl + D</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Go to Reviews</span>
+                                    <span class="keyboard-shortcut">Ctrl + R</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Go to Analytics</span>
+                                    <span class="keyboard-shortcut">Ctrl + A</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Search</span>
+                                    <span class="keyboard-shortcut">Ctrl + K</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-medium mb-3">Actions</h4>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>New Response</span>
+                                    <span class="keyboard-shortcut">Ctrl + N</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Save</span>
+                                    <span class="keyboard-shortcut">Ctrl + S</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Refresh</span>
+                                    <span class="keyboard-shortcut">F5</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Help</span>
+                                    <span class="keyboard-shortcut">F1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tour Overlay -->
+    <div id="tourOverlay" class="tour-overlay">
+        <div id="tourHighlight" class="tour-highlight"></div>
+        <div id="tourTooltip" class="tour-tooltip">
+            <div class="mb-4">
+                <h3 id="tourTitle" class="font-semibold text-lg mb-2"></h3>
+                <p id="tourContent" class="text-gray-600"></p>
+            </div>
+            <div class="flex items-center justify-between">
+                <div class="flex space-x-2">
+                    <span id="tourProgress" class="text-sm text-gray-500"></span>
+                </div>
+                <div class="flex space-x-2">
+                    <button id="tourPrev" class="bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-400 transition-colors">
+                        Previous
+                    </button>
+                    <button id="tourNext" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700 transition-colors">
+                        Next
+                    </button>
+                    <button id="tourSkip" class="bg-gray-300 text-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-400 transition-colors">
+                        Skip
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function onboardingApp() {
+            return {
+                activeTab: 'onboarding',
+                onboardingStatus: {
+                    status: 'not_started',
+                    current_step: 0,
+                    total_steps: 5,
+                    progress_percentage: 0,
+                    milestones: {
+                        profile_completed: false,
+                        first_integration_added: false,
+                        first_review_responded: false,
+                        dashboard_customized: false,
+                        team_invited: false
+                    }
+                },
+                nextSteps: [],
+                availableTours: [],
+                dashboardLayouts: [],
+                preferences: {
+                    theme: 'light',
+                    language: 'en',
+                    timezone: 'UTC',
+                    items_per_page: 25,
+                    auto_refresh_interval: 300,
+                    notifications: {
+                        email: true,
+                        push: true,
+                        desktop: false,
+                        sound: true
+                    },
+                    features: {
+                        keyboard_shortcuts: true,
+                        advanced_mode: false,
+                        beta_features: false,
+                        analytics_tracking: true
+                    }
+                },
+                quickActions: [],
+                announcements: [],
+                currentTour: null,
+                currentTourStep: 0,
+
+                init() {
+                    this.loadOnboardingStatus();
+                    this.loadTours();
+                    this.loadDashboardLayouts();
+                    this.loadPreferences();
+                    this.loadQuickActions();
+                    this.loadAnnouncements();
+                },
+
+                async loadOnboardingStatus() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/onboarding/onboarding/status', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.onboardingStatus = data.onboarding;
+                            this.nextSteps = data.next_steps;
+                            this.preferences = data.preferences;
+                        }
+                    } catch (error) {
+                        console.error('Error loading onboarding status:', error);
+                    }
+                },
+
+                async loadTours() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/onboarding/tours/available', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.availableTours = data.tours;
+                        }
+                    } catch (error) {
+                        console.error('Error loading tours:', error);
+                    }
+                },
+
+                async loadDashboardLayouts() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/onboarding/dashboard/layouts', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.dashboardLayouts = data.layouts;
+                        }
+                    } catch (error) {
+                        console.error('Error loading dashboard layouts:', error);
+                    }
+                },
+
+                async loadPreferences() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/onboarding/preferences', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.preferences = data.preferences;
+                        }
+                    } catch (error) {
+                        console.error('Error loading preferences:', error);
+                    }
+                },
+
+                async loadQuickActions() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/onboarding/quick-actions', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.quickActions = data.actions;
+                        }
+                    } catch (error) {
+                        console.error('Error loading quick actions:', error);
+                    }
+                },
+
+                async loadAnnouncements() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/onboarding/announcements', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.announcements = data.announcements.filter(a => !a.user_view.dismissed);
+                        }
+                    } catch (error) {
+                        console.error('Error loading announcements:', error);
+                    }
+                },
+
+                async startOnboarding() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/onboarding/onboarding/start', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.onboardingStatus = data.onboarding;
+                            this.showNotification('Onboarding started!', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Error starting onboarding:', error);
+                    }
+                },
+
+                async completeStep(stepId) {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch(`/api/onboarding/onboarding/step/${stepId}/complete`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.onboardingStatus = data.onboarding;
+                            this.loadOnboardingStatus(); // Refresh to get updated next steps
+                            this.showNotification('Step completed!', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Error completing step:', error);
+                    }
+                },
+
+                async startTour(tourType) {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch(`/api/onboarding/tours/${tourType}/start`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.currentTour = data.tour_steps;
+                            this.currentTourStep = 0;
+                            this.showTour();
+                        }
+                    } catch (error) {
+                        console.error('Error starting tour:', error);
+                    }
+                },
+
+                async savePreferences() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/onboarding/preferences', {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(this.preferences)
+                        });
+
+                        if (response.ok) {
+                            this.showNotification('Preferences saved!', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Error saving preferences:', error);
+                    }
+                },
+
+                async dismissAnnouncement(announcementId) {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch(`/api/onboarding/announcements/${announcementId}/dismiss`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            this.announcements = this.announcements.filter(a => a.id !== announcementId);
+                        }
+                    } catch (error) {
+                        console.error('Error dismissing announcement:', error);
+                    }
+                },
+
+                formatMilestoneName(key) {
+                    return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                },
+
+                showTour() {
+                    if (!this.currentTour || !this.currentTour.steps) return;
+                    
+                    const overlay = document.getElementById('tourOverlay');
+                    const tooltip = document.getElementById('tourTooltip');
+                    const highlight = document.getElementById('tourHighlight');
+                    
+                    overlay.style.display = 'block';
+                    
+                    const step = this.currentTour.steps[this.currentTourStep];
+                    document.getElementById('tourTitle').textContent = step.title;
+                    document.getElementById('tourContent').textContent = step.content;
+                    document.getElementById('tourProgress').textContent = `${this.currentTourStep + 1} of ${this.currentTour.steps.length}`;
+                    
+                    // Position tooltip and highlight
+                    this.positionTourElements(step);
+                },
+
+                positionTourElements(step) {
+                    const target = document.querySelector(step.target);
+                    if (!target) return;
+                    
+                    const rect = target.getBoundingClientRect();
+                    const highlight = document.getElementById('tourHighlight');
+                    const tooltip = document.getElementById('tourTooltip');
+                    
+                    // Position highlight
+                    highlight.style.left = (rect.left - 5) + 'px';
+                    highlight.style.top = (rect.top - 5) + 'px';
+                    highlight.style.width = (rect.width + 10) + 'px';
+                    highlight.style.height = (rect.height + 10) + 'px';
+                    
+                    // Position tooltip
+                    let tooltipTop, tooltipLeft;
+                    
+                    switch (step.position) {
+                        case 'bottom':
+                            tooltipTop = rect.bottom + 10;
+                            tooltipLeft = rect.left + (rect.width / 2) - 150;
+                            break;
+                        case 'top':
+                            tooltipTop = rect.top - 200;
+                            tooltipLeft = rect.left + (rect.width / 2) - 150;
+                            break;
+                        case 'left':
+                            tooltipTop = rect.top + (rect.height / 2) - 100;
+                            tooltipLeft = rect.left - 320;
+                            break;
+                        case 'right':
+                            tooltipTop = rect.top + (rect.height / 2) - 100;
+                            tooltipLeft = rect.right + 10;
+                            break;
+                        default:
+                            tooltipTop = rect.bottom + 10;
+                            tooltipLeft = rect.left;
+                    }
+                    
+                    tooltip.style.top = Math.max(10, tooltipTop) + 'px';
+                    tooltip.style.left = Math.max(10, Math.min(window.innerWidth - 320, tooltipLeft)) + 'px';
+                },
+
+                showNotification(message, type = 'info') {
+                    // Simple notification implementation
+                    const notification = document.createElement('div');
+                    notification.className = `fixed top-4 right-4 p-4 rounded-lg text-white z-50 ${
+                        type === 'success' ? 'bg-green-500' : 
+                        type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+                    }`;
+                    notification.textContent = message;
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 3000);
+                }
+            }
+        }
+
+        // Tour navigation
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('tourNext').addEventListener('click', function() {
+                const app = Alpine.$data(document.querySelector('[x-data]'));
+                if (app.currentTour && app.currentTourStep < app.currentTour.steps.length - 1) {
+                    app.currentTourStep++;
+                    app.showTour();
+                } else {
+                    document.getElementById('tourOverlay').style.display = 'none';
+                }
+            });
+            
+            document.getElementById('tourPrev').addEventListener('click', function() {
+                const app = Alpine.$data(document.querySelector('[x-data]'));
+                if (app.currentTourStep > 0) {
+                    app.currentTourStep--;
+                    app.showTour();
+                }
+            });
+            
+            document.getElementById('tourSkip').addEventListener('click', function() {
+                document.getElementById('tourOverlay').style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
+
