@@ -1,0 +1,86 @@
+{
+  "project_name": "ReviewAssist Pro",
+  "description": "AI-powered review management SaaS platform for businesses",
+  "target_users": [
+    "Small to Medium Businesses",
+    "Marketing Agencies", 
+    "Enterprise Companies",
+    "Review Management Teams"
+  ],
+  "core_features": {
+    "implemented": [
+      "Multi-Platform Review Management",
+      "AI-Powered Response Generation", 
+      "Real-Time Analytics",
+      "User Authentication",
+      "Subscription Management",
+      "Team Collaboration",
+      "Advanced Reporting",
+      "Automation Workflows",
+      "API Integration",
+      "Real-Time Features"
+    ],
+    "in_development": [
+      "Stripe Payment Processing",
+      "Platform API Integrations",
+      "Advanced Analytics",
+      "Mobile Application"
+    ]
+  },
+  "tech_stack": {
+    "backend": {
+      "runtime": "Python 3.11",
+      "framework": "Flask 3.1.1",
+      "database": "SQLite (dev), PostgreSQL (production)",
+      "orm": "SQLAlchemy 2.0.41",
+      "realtime": "Flask-SocketIO",
+      "auth": "JWT",
+      "ai": "OpenAI API"
+    },
+    "frontend": {
+      "languages": "HTML5, CSS3, JavaScript ES6+",
+      "styling": "Tailwind CSS",
+      "charts": "Chart.js",
+      "architecture": "Single Page Application"
+    },
+    "infrastructure": {
+      "containerization": "Docker",
+      "cicd": "GitHub Actions", 
+      "hosting": "Manus, DigitalOcean, AWS, GCP"
+    }
+  },
+  "success_criteria": {
+    "technical": [
+      "Complete Stripe integration",
+      "Live API integrations",
+      "80%+ test coverage",
+      "Sub-2s page load times",
+      "SOC 2 compliance"
+    ],
+    "business": [
+      "10 paying customers",
+      "50+ active users",
+      "$10K MRR within 6 months",
+      "5+ platform integrations",
+      "Enterprise-ready features"
+    ]
+  },
+  "current_status": {
+    "development_progress": "70% MVP, 40% production-ready",
+    "live_demo": "https://mzhyi8cd3z6g.manus.space",
+    "repository": "https://github.com/tiarnanlarkin/reviewassist-pro",
+    "target_launch": "Q1 2025"
+  },
+  "env_vars_required": [
+    "SECRET_KEY",
+    "DATABASE_URL", 
+    "REDIS_URL",
+    "OPENAI_API_KEY",
+    "STRIPE_SECRET_KEY",
+    "JWT_SECRET_KEY",
+    "SMTP_SERVER",
+    "SMTP_USERNAME",
+    "SMTP_PASSWORD"
+  ]
+}
+

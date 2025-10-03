@@ -1,0 +1,79 @@
+{
+  "project_name": "ReviewAssist Pro",
+  "runtime": {
+    "python": "3.11",
+    "node": "22.13.0",
+    "database": "SQLite (dev), PostgreSQL (prod)",
+    "redis": "7.x (for real-time features)"
+  },
+  "services": {
+    "web": {
+      "framework": "Flask 3.1.1",
+      "port": 5000,
+      "entry_point": "src/main.py"
+    },
+    "database": {
+      "development": "SQLite (src/database/app.db)",
+      "production": "PostgreSQL",
+      "orm": "SQLAlchemy 2.0.41"
+    },
+    "cache": {
+      "redis": "Real-time features and session storage"
+    },
+    "ai": {
+      "provider": "OpenAI API",
+      "models": "GPT-3.5/GPT-4 for response generation"
+    }
+  },
+  "scripts": {
+    "install": "make install",
+    "dev": "make dev",
+    "build": "make build", 
+    "test": "make test",
+    "lint": "make lint",
+    "format": "make format",
+    "clean": "make clean",
+    "docker_dev": "docker-compose up -d",
+    "docker_build": "docker build -t reviewassist-pro ."
+  },
+  "env_vars_required": [
+    "SECRET_KEY",
+    "DATABASE_URL",
+    "REDIS_URL", 
+    "OPENAI_API_KEY",
+    "OPENAI_API_BASE",
+    "STRIPE_PUBLISHABLE_KEY",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "JWT_SECRET_KEY",
+    "JWT_ACCESS_TOKEN_EXPIRES",
+    "SMTP_SERVER",
+    "SMTP_PORT", 
+    "SMTP_USERNAME",
+    "SMTP_PASSWORD",
+    "APP_NAME",
+    "APP_URL",
+    "DEMO_MODE",
+    "GOOGLE_PLACES_API_KEY",
+    "YELP_API_KEY",
+    "FACEBOOK_ACCESS_TOKEN",
+    "SENTRY_DSN",
+    "LOG_LEVEL"
+  ],
+  "links": {
+    "docs": "/docs/",
+    "api_docs": "README.md#api-documentation",
+    "live_demo": "https://mzhyi8cd3z6g.manus.space",
+    "repository": "https://github.com/tiarnanlarkin/reviewassist-pro"
+  },
+  "prompts_ref": "/_meta/prompts/",
+  "test_framework": "pytest",
+  "linting": ["flake8", "pylint", "black", "isort"],
+  "type_checking": "mypy",
+  "containerization": {
+    "dockerfile": "Dockerfile",
+    "compose": "docker-compose.yml",
+    "health_check": "/health endpoint"
+  }
+}
+
