@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Sync - ReviewAssist Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-semibold text-gray-900">Platform Synchronization</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="syncAllBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-sync-alt mr-2"></i>Sync All Platforms
+                    </button>
+                    <a href="/" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Sync Statistics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <i class="fas fa-sync-alt text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Syncs</p>
+                        <p id="totalSyncs" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Success Rate</p>
+                        <p id="successRate" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <i class="fas fa-download text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Records Synced</p>
+                        <p id="recordsSynced" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-orange-100 rounded-lg">
+                        <i class="fas fa-plus-circle text-orange-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">New Records</p>
+                        <p id="newRecords" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div id="platformCards" class="contents">
+                <!-- Platform cards will be populated here -->
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6">
+                    <button class="tab-button border-b-2 border-blue-500 py-4 px-1 text-sm font-medium text-blue-600" data-tab="sync">
+                        <i class="fas fa-sync-alt mr-2"></i>Sync Management
+                    </button>
+                    <button class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="history">
+                        <i class="fas fa-history mr-2"></i>Sync History
+                    </button>
+                    <button class="tab-button border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300" data-tab="analytics">
+                        <i class="fas fa-chart-bar mr-2"></i>Analytics
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Sync Management Tab -->
+            <div id="syncTab" class="tab-content p-6">
+                <div class="space-y-6">
+                    <!-- Individual Platform Sync -->
+                    <div class="border rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Individual Platform Sync</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Platform</label>
+                                <select id="platformSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">Select Platform</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Location ID</label>
+                                <input type="text" id="locationIdInput" placeholder="Enter location ID" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Limit</label>
+                                <input type="number" id="limitInput" value="50" min="1" max="100" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+                        <div class="mt-4 flex space-x-4">
+                            <button id="syncSingleBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-sync-alt mr-2"></i>Sync Reviews
+                            </button>
+                            <button id="getLocationInfoBtn" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                <i class="fas fa-info-circle mr-2"></i>Get Location Info
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Location Information Display -->
+                    <div id="locationInfoCard" class="border rounded-lg p-6 hidden">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Location Information</h3>
+                        <div id="locationInfoContent">
+                            <!-- Location info will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Bulk Sync Options -->
+                    <div class="border rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Bulk Sync Options</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Review Limit per Platform</label>
+                                <input type="number" id="bulkLimitInput" value="50" min="1" max="100" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div class="flex items-end">
+                                <button id="bulkSyncBtn" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                                    <i class="fas fa-sync-alt mr-2"></i>Sync All Platforms
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sync History Tab -->
+            <div id="historyTab" class="tab-content p-6 hidden">
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">Recent Sync History</h3>
+                        <button id="refreshHistoryBtn" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-refresh mr-2"></i>Refresh
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Platform</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Records</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody id="syncHistoryTable" class="bg-white divide-y divide-gray-200">
+                                <!-- History rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analyticsTab" class="tab-content p-6 hidden">
+                <div class="space-y-6">
+                    <h3 class="text-lg font-medium text-gray-900">Platform Sync Analytics</h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white border rounded-lg p-6">
+                            <h4 class="text-md font-medium text-gray-900 mb-4">Sync Success Rate by Platform</h4>
+                            <canvas id="successRateChart" width="400" height="200"></canvas>
+                        </div>
+                        
+                        <div class="bg-white border rounded-lg p-6">
+                            <h4 class="text-md font-medium text-gray-900 mb-4">Records Synced by Platform</h4>
+                            <canvas id="recordsChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sync Progress Modal -->
+    <div id="syncProgressModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Syncing Reviews</h3>
+                <p id="syncProgressText" class="text-gray-600">Please wait while we sync your reviews...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Toast -->
+    <div id="toast" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <i id="toastIcon" class="fas fa-check-circle mr-2"></i>
+            <span id="toastMessage">Success!</span>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let availablePlatforms = [];
+        let syncStats = {};
+        let syncHistory = [];
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+            setupEventListeners();
+        });
+
+        async function initializePage() {
+            try {
+                await loadAvailablePlatforms();
+                await loadSyncStats();
+                await loadSyncHistory();
+                updateUI();
+            } catch (error) {
+                console.error('Error initializing page:', error);
+                showToast('Error loading platform sync data', 'error');
+            }
+        }
+
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabName = this.dataset.tab;
+                    switchTab(tabName);
+                });
+            });
+
+            // Sync buttons
+            document.getElementById('syncSingleBtn').addEventListener('click', syncSinglePlatform);
+            document.getElementById('bulkSyncBtn').addEventListener('click', syncAllPlatforms);
+            document.getElementById('syncAllBtn').addEventListener('click', syncAllPlatforms);
+            document.getElementById('getLocationInfoBtn').addEventListener('click', getLocationInfo);
+            document.getElementById('refreshHistoryBtn').addEventListener('click', loadSyncHistory);
+        }
+
+        async function loadAvailablePlatforms() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/platform-sync/available-platforms', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    availablePlatforms = data.platforms;
+                    populatePlatformSelect();
+                    createPlatformCards();
+                } else {
+                    throw new Error('Failed to load platforms');
+                }
+            } catch (error) {
+                console.error('Error loading platforms:', error);
+                throw error;
+            }
+        }
+
+        async function loadSyncStats() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/platform-sync/sync-stats', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    syncStats = await response.json();
+                } else {
+                    throw new Error('Failed to load sync stats');
+                }
+            } catch (error) {
+                console.error('Error loading sync stats:', error);
+                throw error;
+            }
+        }
+
+        async function loadSyncHistory() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/platform-sync/sync-history', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    syncHistory = data.sync_history;
+                    populateSyncHistoryTable();
+                } else {
+                    throw new Error('Failed to load sync history');
+                }
+            } catch (error) {
+                console.error('Error loading sync history:', error);
+                throw error;
+            }
+        }
+
+        function populatePlatformSelect() {
+            const select = document.getElementById('platformSelect');
+            select.innerHTML = '<option value="">Select Platform</option>';
+            
+            availablePlatforms.forEach(platform => {
+                const option = document.createElement('option');
+                option.value = platform.name;
+                option.textContent = platform.display_name;
+                select.appendChild(option);
+            });
+        }
+
+        function createPlatformCards() {
+            const container = document.getElementById('platformCards');
+            container.innerHTML = '';
+
+            availablePlatforms.forEach(platform => {
+                const stats = syncStats.platform_stats?.[platform.name] || {};
+                
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-lg shadow p-6';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="p-2 bg-blue-100 rounded-lg">
+                                <i class="fab fa-${platform.name} text-blue-600"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-lg font-medium text-gray-900">${platform.display_name}</h3>
+                                <p class="text-sm text-gray-600">${platform.description}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${platform.supports_sync ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                ${platform.supports_sync ? 'Active' : 'Inactive'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-600">Total Syncs</p>
+                            <p class="font-semibold">${stats.total_syncs || 0}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Records Synced</p>
+                            <p class="font-semibold">${stats.records_synced || 0}</p>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        function updateUI() {
+            // Update statistics
+            document.getElementById('totalSyncs').textContent = syncStats.total_syncs || 0;
+            document.getElementById('successRate').textContent = `${Math.round(syncStats.success_rate || 0)}%`;
+            document.getElementById('recordsSynced').textContent = syncStats.recent_stats?.total_records_synced || 0;
+            document.getElementById('newRecords').textContent = syncStats.recent_stats?.total_new_records || 0;
+
+            // Update charts if analytics tab is active
+            if (!document.getElementById('analyticsTab').classList.contains('hidden')) {
+                updateCharts();
+            }
+        }
+
+        function populateSyncHistoryTable() {
+            const tbody = document.getElementById('syncHistoryTable');
+            tbody.innerHTML = '';
+
+            if (syncHistory.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">No sync history found</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            syncHistory.forEach(log => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <i class="fab fa-${log.platform} mr-2 text-gray-400"></i>
+                            <span class="text-sm font-medium text-gray-900">${log.platform}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${log.sync_type}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${log.status === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${log.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${log.records_processed} processed, ${log.records_created} new
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${new Date(log.sync_date).toLocaleString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${log.duration ? `${log.duration}s` : '-'}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function syncSinglePlatform() {
+            const platform = document.getElementById('platformSelect').value;
+            const locationId = document.getElementById('locationIdInput').value;
+            const limit = parseInt(document.getElementById('limitInput').value);
+
+            if (!platform || !locationId) {
+                showToast('Please select a platform and enter a location ID', 'error');
+                return;
+            }
+
+            try {
+                showSyncProgress('Syncing reviews from ' + platform + '...');
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/platform-sync/sync-reviews', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        platform: platform,
+                        location_id: locationId,
+                        limit: limit
+                    })
+                });
+
+                hideSyncProgress();
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast(`Successfully synced ${data.total_processed} reviews (${data.new_reviews} new)`, 'success');
+                    await loadSyncStats();
+                    await loadSyncHistory();
+                    updateUI();
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Sync failed');
+                }
+            } catch (error) {
+                hideSyncProgress();
+                console.error('Error syncing platform:', error);
+                showToast('Error syncing reviews: ' + error.message, 'error');
+            }
+        }
+
+        async function syncAllPlatforms() {
+            const limit = parseInt(document.getElementById('bulkLimitInput').value);
+
+            try {
+                showSyncProgress('Syncing reviews from all platforms...');
+                
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/platform-sync/sync-all', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        limit: limit
+                    })
+                });
+
+                hideSyncProgress();
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showToast(`Successfully synced ${data.total_processed} reviews (${data.total_new} new)`, 'success');
+                    await loadSyncStats();
+                    await loadSyncHistory();
+                    updateUI();
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Bulk sync failed');
+                }
+            } catch (error) {
+                hideSyncProgress();
+                console.error('Error syncing all platforms:', error);
+                showToast('Error syncing all platforms: ' + error.message, 'error');
+            }
+        }
+
+        async function getLocationInfo() {
+            const platform = document.getElementById('platformSelect').value;
+            const locationId = document.getElementById('locationIdInput').value;
+
+            if (!platform || !locationId) {
+                showToast('Please select a platform and enter a location ID', 'error');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/platform-sync/location-info', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        platform: platform,
+                        location_id: locationId
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayLocationInfo(data.location);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to get location info');
+                }
+            } catch (error) {
+                console.error('Error getting location info:', error);
+                showToast('Error getting location info: ' + error.message, 'error');
+            }
+        }
+
+        function displayLocationInfo(location) {
+            const card = document.getElementById('locationInfoCard');
+            const content = document.getElementById('locationInfoContent');
+            
+            content.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">${location.name}</h4>
+                        <p class="text-sm text-gray-600 mb-2">${location.address}</p>
+                        <p class="text-sm text-gray-600 mb-2">Category: ${location.category}</p>
+                        ${location.phone ? `<p class="text-sm text-gray-600 mb-2">Phone: ${location.phone}</p>` : ''}
+                        ${location.website ? `<p class="text-sm text-gray-600 mb-2">Website: <a href="${location.website}" target="_blank" class="text-blue-600 hover:underline">${location.website}</a></p>` : ''}
+                    </div>
+                    <div>
+                        <div class="flex items-center mb-2">
+                            <span class="text-lg font-semibold text-gray-900">${location.rating}</span>
+                            <div class="flex ml-2">
+                                ${Array.from({length: 5}, (_, i) => `<i class="fas fa-star ${i < Math.floor(location.rating) ? 'text-yellow-400' : 'text-gray-300'}"></i>`).join('')}
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600">${location.review_count} reviews</p>
+                        <p class="text-sm text-gray-600 mt-2">Platform: ${location.platform}</p>
+                        <p class="text-sm text-gray-600">ID: ${location.platform_location_id}</p>
+                    </div>
+                </div>
+            `;
+            
+            card.classList.remove('hidden');
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                if (button.dataset.tab === tabName) {
+                    button.classList.remove('border-transparent', 'text-gray-500');
+                    button.classList.add('border-blue-500', 'text-blue-600');
+                } else {
+                    button.classList.remove('border-blue-500', 'text-blue-600');
+                    button.classList.add('border-transparent', 'text-gray-500');
+                }
+            });
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            document.getElementById(tabName + 'Tab').classList.remove('hidden');
+
+            // Load charts if analytics tab is selected
+            if (tabName === 'analytics') {
+                setTimeout(updateCharts, 100);
+            }
+        }
+
+        function updateCharts() {
+            updateSuccessRateChart();
+            updateRecordsChart();
+        }
+
+        function updateSuccessRateChart() {
+            const ctx = document.getElementById('successRateChart').getContext('2d');
+            
+            const platforms = Object.keys(syncStats.platform_stats || {});
+            const successRates = platforms.map(platform => {
+                const stats = syncStats.platform_stats[platform];
+                return stats.total_syncs > 0 ? (stats.successful_syncs / stats.total_syncs * 100) : 0;
+            });
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: platforms.map(p => p.charAt(0).toUpperCase() + p.slice(1)),
+                    datasets: [{
+                        label: 'Success Rate (%)',
+                        data: successRates,
+                        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateRecordsChart() {
+            const ctx = document.getElementById('recordsChart').getContext('2d');
+            
+            const platforms = Object.keys(syncStats.platform_stats || {});
+            const recordsSynced = platforms.map(platform => {
+                return syncStats.platform_stats[platform].records_synced || 0;
+            });
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: platforms.map(p => p.charAt(0).toUpperCase() + p.slice(1)),
+                    datasets: [{
+                        data: recordsSynced,
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
+
+        function showSyncProgress(message) {
+            document.getElementById('syncProgressText').textContent = message;
+            document.getElementById('syncProgressModal').classList.remove('hidden');
+            document.getElementById('syncProgressModal').classList.add('flex');
+        }
+
+        function hideSyncProgress() {
+            document.getElementById('syncProgressModal').classList.add('hidden');
+            document.getElementById('syncProgressModal').classList.remove('flex');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const messageEl = document.getElementById('toastMessage');
+            
+            messageEl.textContent = message;
+            
+            if (type === 'success') {
+                toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                icon.className = 'fas fa-check-circle mr-2';
+            } else {
+                toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                icon.className = 'fas fa-exclamation-circle mr-2';
+            }
+            
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
+
