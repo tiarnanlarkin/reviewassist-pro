@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Features - ReviewAssist Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-semibold text-gray-900">
+                        <i class="fas fa-robot text-blue-600 mr-2"></i>
+                        AI Features
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="window.location.href='/'" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-1"></i> Dashboard
+                    </button>
+                    <div id="userInfo" class="text-sm text-gray-600"></div>
+                    <button id="logoutBtn" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- AI Features Tabs -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8 px-6">
+                    <button class="ai-tab-btn border-b-2 border-blue-500 py-4 px-1 text-sm font-medium text-blue-600" data-tab="sentiment">
+                        <i class="fas fa-heart mr-2"></i>Sentiment Analysis
+                    </button>
+                    <button class="ai-tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="response">
+                        <i class="fas fa-reply mr-2"></i>Smart Responses
+                    </button>
+                    <button class="ai-tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="categorization">
+                        <i class="fas fa-tags mr-2"></i>Categorization
+                    </button>
+                    <button class="ai-tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="insights">
+                        <i class="fas fa-lightbulb mr-2"></i>Insights
+                    </button>
+                    <button class="ai-tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="competitors">
+                        <i class="fas fa-chart-line mr-2"></i>Competitor Analysis
+                    </button>
+                    <button class="ai-tab-btn border-b-2 border-transparent py-4 px-1 text-sm font-medium text-gray-500 hover:text-gray-700" data-tab="predictions">
+                        <i class="fas fa-crystal-ball mr-2"></i>Predictions
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Sentiment Analysis Tab -->
+            <div id="sentiment-tab" class="ai-tab-content p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Input Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-medium text-gray-900">Analyze Review Sentiment</h3>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Review Text</label>
+                            <textarea id="sentimentReviewText" rows="6" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter review text to analyze..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Business Type</label>
+                            <select id="sentimentBusinessType" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="general">General</option>
+                                <option value="restaurant">Restaurant</option>
+                                <option value="hotel">Hotel</option>
+                                <option value="retail">Retail</option>
+                                <option value="service">Service</option>
+                                <option value="healthcare">Healthcare</option>
+                            </select>
+                        </div>
+                        <button onclick="analyzeSentiment()" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <i class="fas fa-brain mr-2"></i>Analyze Sentiment
+                        </button>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div id="sentimentResults" class="space-y-4 hidden">
+                        <h3 class="text-lg font-medium text-gray-900">Analysis Results</h3>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="text-center">
+                                    <div id="sentimentScore" class="text-3xl font-bold text-blue-600">0.0</div>
+                                    <div class="text-sm text-gray-600">Sentiment Score</div>
+                                </div>
+                                <div class="text-center">
+                                    <div id="sentimentConfidence" class="text-3xl font-bold text-green-600">0%</div>
+                                    <div class="text-sm text-gray-600">Confidence</div>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-700">Emotion:</span>
+                                    <span id="sentimentEmotion" class="text-sm text-gray-900 font-semibold"></span>
+                                </div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-700">Urgency:</span>
+                                    <span id="sentimentUrgency" class="text-sm text-gray-900 font-semibold"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="sentimentAspects" class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-3">Aspect Analysis</h4>
+                            <div id="aspectsList" class="space-y-2"></div>
+                        </div>
+                        <div id="sentimentKeywords" class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-3">Key Keywords</h4>
+                            <div id="keywordsList" class="flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Responses Tab -->
+            <div id="response-tab" class="ai-tab-content p-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Input Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-medium text-gray-900">Generate Smart Response</h3>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Review Text</label>
+                            <textarea id="responseReviewText" rows="4" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter review text..."></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
+                                <input type="text" id="responseBusinessName" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Your Business Name">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Customer Name</label>
+                                <input type="text" id="responseCustomerName" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Customer Name (optional)">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Business Type</label>
+                                <select id="responseBusinessType" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="general">General</option>
+                                    <option value="restaurant">Restaurant</option>
+                                    <option value="hotel">Hotel</option>
+                                    <option value="retail">Retail</option>
+                                    <option value="service">Service</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Response Tone</label>
+                                <select id="responseTone" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="professional">Professional</option>
+                                    <option value="friendly">Friendly</option>
+                                    <option value="apologetic">Apologetic</option>
+                                    <option value="grateful">Grateful</option>
+                                    <option value="empathetic">Empathetic</option>
+                                    <option value="enthusiastic">Enthusiastic</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="generateSmartResponse()" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <i class="fas fa-magic mr-2"></i>Generate Response
+                        </button>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div id="responseResults" class="space-y-4 hidden">
+                        <h3 class="text-lg font-medium text-gray-900">Generated Response</h3>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-700">Quality Score:</span>
+                                    <span id="responseQuality" class="text-sm text-gray-900 font-semibold"></span>
+                                </div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-700">Tone:</span>
+                                    <span id="responseActualTone" class="text-sm text-gray-900 font-semibold"></span>
+                                </div>
+                            </div>
+                            <div class="border border-gray-200 rounded-md p-3 bg-white">
+                                <div id="generatedResponse" class="text-gray-900 whitespace-pre-wrap"></div>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button onclick="copyResponse()" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                    <i class="fas fa-copy mr-1"></i>Copy
+                                </button>
+                                <button onclick="regenerateResponse()" class="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700">
+                                    <i class="fas fa-redo mr-1"></i>Regenerate
+                                </button>
+                            </div>
+                        </div>
+                        <div id="responsePersonalization" class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-3">Personalization Elements</h4>
+                            <div id="personalizationList" class="space-y-1"></div>
+                        </div>
+                        <div id="responseSuggestions" class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-3">Suggested Actions</h4>
+                            <div id="suggestionsList" class="space-y-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categorization Tab -->
+            <div id="categorization-tab" class="ai-tab-content p-6 hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Input Section -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-medium text-gray-900">Categorize Review</h3>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Review Text</label>
+                            <textarea id="categorizationReviewText" rows="6" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter review text to categorize..."></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Business Type</label>
+                            <select id="categorizationBusinessType" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="general">General</option>
+                                <option value="restaurant">Restaurant</option>
+                                <option value="hotel">Hotel</option>
+                                <option value="retail">Retail</option>
+                                <option value="service">Service</option>
+                            </select>
+                        </div>
+                        <button onclick="categorizeReview()" class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <i class="fas fa-tags mr-2"></i>Categorize Review
+                        </button>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div id="categorizationResults" class="space-y-4 hidden">
+                        <h3 class="text-lg font-medium text-gray-900">Categorization Results</h3>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div class="text-center">
+                                    <div id="primaryCategory" class="text-lg font-bold text-purple-600"></div>
+                                    <div class="text-sm text-gray-600">Primary Category</div>
+                                </div>
+                                <div class="text-center">
+                                    <div id="priorityScore" class="text-lg font-bold text-orange-600"></div>
+                                    <div class="text-sm text-gray-600">Priority Score</div>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-700">Department:</span>
+                                    <span id="assignedDepartment" class="text-sm text-gray-900 font-semibold"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="secondaryCategories" class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-3">Secondary Categories</h4>
+                            <div id="secondaryCategoriesList" class="flex flex-wrap gap-2"></div>
+                        </div>
+                        <div id="categorizationTags" class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-3">Tags</h4>
+                            <div id="tagsList" class="flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insights Tab -->
+            <div id="insights-tab" class="ai-tab-content p-6 hidden">
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-900">AI-Powered Business Insights</h3>
+                        <button onclick="generateInsights()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            <i class="fas fa-sync mr-2"></i>Refresh Insights
+                        </button>
+                    </div>
+
+                    <!-- Insights Grid -->
+                    <div id="insightsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Insights will be populated here -->
+                    </div>
+
+                    <!-- Pattern Detection -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Pattern Detection</h4>
+                        <div id="patternResults" class="space-y-4">
+                            <div class="text-gray-500 text-center py-8">
+                                Click "Refresh Insights" to analyze patterns in your review data
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Competitor Analysis Tab -->
+            <div id="competitors-tab" class="ai-tab-content p-6 hidden">
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-900">Competitor Analysis</h3>
+                        <button onclick="analyzeCompetitors()" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
+                            <i class="fas fa-chart-line mr-2"></i>Analyze Competitors
+                        </button>
+                    </div>
+
+                    <!-- Competitor Input -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h4 class="text-lg font-medium text-gray-900 mb-4">Add Competitor Data</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Competitor Name</label>
+                                <input type="text" id="competitorName" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Competitor business name">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Average Rating</label>
+                                <input type="number" id="competitorRating" min="1" max="5" step="0.1" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="4.2">
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Sample Reviews (one per line)</label>
+                            <textarea id="competitorReviews" rows="4" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter sample competitor reviews..."></textarea>
+                        </div>
+                        <button onclick="addCompetitor()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                            <i class="fas fa-plus mr-2"></i>Add Competitor
+                        </button>
+                    </div>
+
+                    <!-- Competitor Results -->
+                    <div id="competitorResults" class="space-y-4">
+                        <div class="text-gray-500 text-center py-8">
+                            Add competitor data and click "Analyze Competitors" to see insights
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Predictions Tab -->
+            <div id="predictions-tab" class="ai-tab-content p-6 hidden">
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-gray-900">Predictive Analytics</h3>
+                        <button onclick="generatePredictions()" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                            <i class="fas fa-crystal-ball mr-2"></i>Generate Predictions
+                        </button>
+                    </div>
+
+                    <!-- Prediction Results -->
+                    <div id="predictionResults" class="space-y-4">
+                        <div class="text-gray-500 text-center py-8">
+                            Click "Generate Predictions" to see AI-powered forecasts and insights
+                        </div>
+                    </div>
+
+                    <!-- Forecast Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <h4 class="text-lg font-medium text-gray-900 mb-4">Sentiment Forecast</h4>
+                            <canvas id="sentimentForecastChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <h4 class="text-lg font-medium text-gray-900 mb-4">Volume Prediction</h4>
+                            <canvas id="volumePredictionChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div id="loadingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <div class="flex items-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+                <div class="text-gray-900">Processing with AI...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let authToken = localStorage.getItem('authToken');
+        let competitorData = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            setupEventListeners();
+            showTab('sentiment');
+        });
+
+        function checkAuth() {
+            if (!authToken) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Verify token and get user info
+            fetch('/api/auth/verify', {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.user) {
+                    currentUser = data.user;
+                    document.getElementById('userInfo').textContent = `${data.user.full_name} (${data.user.role})`;
+                } else {
+                    localStorage.removeItem('authToken');
+                    window.location.href = '/';
+                }
+            })
+            .catch(error => {
+                console.error('Auth verification failed:', error);
+                localStorage.removeItem('authToken');
+                window.location.href = '/';
+            });
+        }
+
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.ai-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.getAttribute('data-tab');
+                    showTab(tab);
+                });
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.ai-tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+
+            // Show selected tab
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+
+            // Update tab buttons
+            document.querySelectorAll('.ai-tab-btn').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'text-blue-600');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+
+            const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+            activeBtn.classList.remove('border-transparent', 'text-gray-500');
+            activeBtn.classList.add('border-blue-500', 'text-blue-600');
+        }
+
+        function showLoading() {
+            document.getElementById('loadingModal').classList.remove('hidden');
+            document.getElementById('loadingModal').classList.add('flex');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingModal').classList.add('hidden');
+            document.getElementById('loadingModal').classList.remove('flex');
+        }
+
+        // Sentiment Analysis Functions
+        async function analyzeSentiment() {
+            const reviewText = document.getElementById('sentimentReviewText').value.trim();
+            const businessType = document.getElementById('sentimentBusinessType').value;
+
+            if (!reviewText) {
+                alert('Please enter review text to analyze');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/ai/analyze-sentiment', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        review_text: reviewText,
+                        business_type: businessType
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.sentiment_analysis) {
+                    displaySentimentResults(data.sentiment_analysis);
+                } else {
+                    alert('Failed to analyze sentiment: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error analyzing sentiment:', error);
+                alert('Failed to analyze sentiment');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displaySentimentResults(analysis) {
+            document.getElementById('sentimentResults').classList.remove('hidden');
+            
+            // Update main metrics
+            document.getElementById('sentimentScore').textContent = analysis.overall_sentiment.toFixed(2);
+            document.getElementById('sentimentConfidence').textContent = Math.round(analysis.confidence * 100) + '%';
+            document.getElementById('sentimentEmotion').textContent = analysis.emotion;
+            document.getElementById('sentimentUrgency').textContent = Math.round(analysis.urgency_score * 100) + '%';
+
+            // Update aspects
+            const aspectsList = document.getElementById('aspectsList');
+            aspectsList.innerHTML = '';
+            
+            Object.entries(analysis.aspects).forEach(([aspect, score]) => {
+                const aspectDiv = document.createElement('div');
+                aspectDiv.className = 'flex items-center justify-between';
+                aspectDiv.innerHTML = `
+                    <span class="text-sm text-gray-700 capitalize">${aspect}:</span>
+                    <span class="text-sm font-semibold ${score > 0 ? 'text-green-600' : score < 0 ? 'text-red-600' : 'text-gray-600'}">${score.toFixed(2)}</span>
+                `;
+                aspectsList.appendChild(aspectDiv);
+            });
+
+            // Update keywords
+            const keywordsList = document.getElementById('keywordsList');
+            keywordsList.innerHTML = '';
+            
+            analysis.keywords.forEach(keyword => {
+                const keywordSpan = document.createElement('span');
+                keywordSpan.className = 'bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded';
+                keywordSpan.textContent = keyword;
+                keywordsList.appendChild(keywordSpan);
+            });
+        }
+
+        // Smart Response Functions
+        async function generateSmartResponse() {
+            const reviewText = document.getElementById('responseReviewText').value.trim();
+            const businessName = document.getElementById('responseBusinessName').value.trim();
+            const customerName = document.getElementById('responseCustomerName').value.trim();
+            const businessType = document.getElementById('responseBusinessType').value;
+            const tone = document.getElementById('responseTone').value;
+
+            if (!reviewText || !businessName) {
+                alert('Please enter review text and business name');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/ai/generate-response', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        review_text: reviewText,
+                        business_name: businessName,
+                        customer_name: customerName,
+                        business_type: businessType,
+                        tone: tone
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.smart_response) {
+                    displayResponseResults(data.smart_response);
+                } else {
+                    alert('Failed to generate response: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error generating response:', error);
+                alert('Failed to generate response');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayResponseResults(response) {
+            document.getElementById('responseResults').classList.remove('hidden');
+            
+            // Update response details
+            document.getElementById('responseQuality').textContent = Math.round(response.quality_score * 100) + '%';
+            document.getElementById('responseActualTone').textContent = response.tone;
+            document.getElementById('generatedResponse').textContent = response.response_text;
+
+            // Update personalization elements
+            const personalizationList = document.getElementById('personalizationList');
+            personalizationList.innerHTML = '';
+            
+            response.personalization_elements.forEach(element => {
+                const elementDiv = document.createElement('div');
+                elementDiv.className = 'text-sm text-gray-700';
+                elementDiv.innerHTML = `<i class="fas fa-check text-green-500 mr-2"></i>${element}`;
+                personalizationList.appendChild(elementDiv);
+            });
+
+            // Update suggestions
+            const suggestionsList = document.getElementById('suggestionsList');
+            suggestionsList.innerHTML = '';
+            
+            response.suggested_actions.forEach(action => {
+                const actionDiv = document.createElement('div');
+                actionDiv.className = 'text-sm text-gray-700';
+                actionDiv.innerHTML = `<i class="fas fa-lightbulb text-yellow-500 mr-2"></i>${action}`;
+                suggestionsList.appendChild(actionDiv);
+            });
+        }
+
+        function copyResponse() {
+            const responseText = document.getElementById('generatedResponse').textContent;
+            navigator.clipboard.writeText(responseText).then(() => {
+                alert('Response copied to clipboard!');
+            });
+        }
+
+        function regenerateResponse() {
+            generateSmartResponse();
+        }
+
+        // Categorization Functions
+        async function categorizeReview() {
+            const reviewText = document.getElementById('categorizationReviewText').value.trim();
+            const businessType = document.getElementById('categorizationBusinessType').value;
+
+            if (!reviewText) {
+                alert('Please enter review text to categorize');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/ai/categorize-review', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        review_text: reviewText,
+                        business_type: businessType
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.categorization) {
+                    displayCategorizationResults(data.categorization);
+                } else {
+                    alert('Failed to categorize review: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error categorizing review:', error);
+                alert('Failed to categorize review');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayCategorizationResults(categorization) {
+            document.getElementById('categorizationResults').classList.remove('hidden');
+            
+            // Update main results
+            document.getElementById('primaryCategory').textContent = categorization.primary_category;
+            document.getElementById('priorityScore').textContent = Math.round(categorization.priority_score * 100) + '%';
+            document.getElementById('assignedDepartment').textContent = categorization.department;
+
+            // Update secondary categories
+            const secondaryCategoriesList = document.getElementById('secondaryCategoriesList');
+            secondaryCategoriesList.innerHTML = '';
+            
+            categorization.secondary_categories.forEach(category => {
+                const categorySpan = document.createElement('span');
+                categorySpan.className = 'bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded';
+                categorySpan.textContent = category;
+                secondaryCategoriesList.appendChild(categorySpan);
+            });
+
+            // Update tags
+            const tagsList = document.getElementById('tagsList');
+            tagsList.innerHTML = '';
+            
+            categorization.tags.forEach(tag => {
+                const tagSpan = document.createElement('span');
+                tagSpan.className = 'bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded';
+                tagSpan.textContent = tag;
+                tagsList.appendChild(tagSpan);
+            });
+        }
+
+        // Insights Functions
+        async function generateInsights() {
+            showLoading();
+
+            try {
+                const response = await fetch('/api/ai/dashboard-insights', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.dashboard_insights) {
+                    displayInsights(data.dashboard_insights);
+                } else {
+                    alert('Failed to generate insights: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error generating insights:', error);
+                alert('Failed to generate insights');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayInsights(insights) {
+            const insightsGrid = document.getElementById('insightsGrid');
+            insightsGrid.innerHTML = '';
+
+            // Create insight cards
+            insights.insights.forEach(insight => {
+                const insightCard = document.createElement('div');
+                insightCard.className = 'bg-white border border-gray-200 rounded-lg p-4';
+                insightCard.innerHTML = `
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                        <h4 class="font-medium text-gray-900">Insight</h4>
+                    </div>
+                    <p class="text-sm text-gray-700">${insight}</p>
+                `;
+                insightsGrid.appendChild(insightCard);
+            });
+
+            // Add recommendations
+            insights.recommendations.forEach(recommendation => {
+                const recommendationCard = document.createElement('div');
+                recommendationCard.className = 'bg-white border border-gray-200 rounded-lg p-4';
+                recommendationCard.innerHTML = `
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-arrow-right text-blue-500 mr-2"></i>
+                        <h4 class="font-medium text-gray-900">Recommendation</h4>
+                    </div>
+                    <p class="text-sm text-gray-700">${recommendation}</p>
+                `;
+                insightsGrid.appendChild(recommendationCard);
+            });
+        }
+
+        // Competitor Analysis Functions
+        function addCompetitor() {
+            const name = document.getElementById('competitorName').value.trim();
+            const rating = parseFloat(document.getElementById('competitorRating').value);
+            const reviewsText = document.getElementById('competitorReviews').value.trim();
+
+            if (!name || !rating || !reviewsText) {
+                alert('Please fill in all competitor fields');
+                return;
+            }
+
+            const reviews = reviewsText.split('\n').filter(r => r.trim()).map(review => ({
+                text: review.trim(),
+                sentiment: Math.random() * 2 - 1, // Placeholder
+                rating: rating + (Math.random() - 0.5)
+            }));
+
+            competitorData.push({
+                name: name,
+                rating: rating,
+                reviews: reviews
+            });
+
+            // Clear form
+            document.getElementById('competitorName').value = '';
+            document.getElementById('competitorRating').value = '';
+            document.getElementById('competitorReviews').value = '';
+
+            alert(`Added competitor: ${name}`);
+        }
+
+        async function analyzeCompetitors() {
+            if (competitorData.length === 0) {
+                alert('Please add competitor data first');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                // Get our reviews data (simplified)
+                const ourReviews = [
+                    { sentiment: 0.5, rating: 4.2, text: "Great service" },
+                    { sentiment: 0.3, rating: 4.0, text: "Good experience" },
+                    { sentiment: -0.2, rating: 3.5, text: "Could be better" }
+                ];
+
+                const response = await fetch('/api/ai/competitor-analysis', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        our_reviews: ourReviews,
+                        competitors: competitorData
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.competitor_analysis) {
+                    displayCompetitorResults(data.competitor_analysis);
+                } else {
+                    alert('Failed to analyze competitors: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error analyzing competitors:', error);
+                alert('Failed to analyze competitors');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayCompetitorResults(analysis) {
+            const resultsDiv = document.getElementById('competitorResults');
+            resultsDiv.innerHTML = '';
+
+            analysis.forEach(competitor => {
+                const competitorCard = document.createElement('div');
+                competitorCard.className = 'bg-white border border-gray-200 rounded-lg p-6';
+                competitorCard.innerHTML = `
+                    <h4 class="text-lg font-medium text-gray-900 mb-4">${competitor.competitor_name}</h4>
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold ${competitor.sentiment_comparison > 0 ? 'text-green-600' : 'text-red-600'}">
+                                ${competitor.sentiment_comparison > 0 ? '+' : ''}${competitor.sentiment_comparison.toFixed(2)}
+                            </div>
+                            <div class="text-sm text-gray-600">Sentiment vs Us</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold ${competitor.volume_comparison > 1 ? 'text-green-600' : 'text-red-600'}">
+                                ${competitor.volume_comparison.toFixed(1)}x
+                            </div>
+                            <div class="text-sm text-gray-600">Volume vs Us</div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <h5 class="font-medium text-gray-900 mb-2">Strengths</h5>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                ${competitor.strengths.map(s => `<li><i class="fas fa-plus text-green-500 mr-2"></i>${s}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 class="font-medium text-gray-900 mb-2">Weaknesses</h5>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                ${competitor.weaknesses.map(w => `<li><i class="fas fa-minus text-red-500 mr-2"></i>${w}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 class="font-medium text-gray-900 mb-2">Opportunities for Us</h5>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                ${competitor.opportunities.map(o => `<li><i class="fas fa-arrow-right text-blue-500 mr-2"></i>${o}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                resultsDiv.appendChild(competitorCard);
+            });
+        }
+
+        // Prediction Functions
+        async function generatePredictions() {
+            showLoading();
+
+            try {
+                // Generate sample historical data
+                const historicalData = [];
+                for (let i = 0; i < 60; i++) {
+                    historicalData.push({
+                        date: new Date(Date.now() - (60 - i) * 24 * 60 * 60 * 1000).toISOString(),
+                        sentiment: Math.random() * 2 - 1,
+                        volume: Math.floor(Math.random() * 20) + 5,
+                        rating: Math.random() * 2 + 3
+                    });
+                }
+
+                const response = await fetch('/api/ai/predictive-insights', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        historical_data: historicalData
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.predictive_insights) {
+                    displayPredictionResults(data.predictive_insights);
+                    createForecastCharts(historicalData);
+                } else {
+                    alert('Failed to generate predictions: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error generating predictions:', error);
+                alert('Failed to generate predictions');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayPredictionResults(predictions) {
+            const resultsDiv = document.getElementById('predictionResults');
+            resultsDiv.innerHTML = '';
+
+            predictions.forEach(prediction => {
+                const predictionCard = document.createElement('div');
+                predictionCard.className = 'bg-white border border-gray-200 rounded-lg p-6';
+                predictionCard.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-medium text-gray-900">${prediction.prediction_type.replace('_', ' ').toUpperCase()}</h4>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">${Math.round(prediction.confidence * 100)}% confidence</span>
+                    </div>
+                    <div class="text-3xl font-bold text-blue-600 mb-2">${prediction.forecast_value.toFixed(2)}</div>
+                    <div class="text-sm text-gray-600 mb-4">Forecast for ${prediction.time_horizon.replace('_', ' ')}</div>
+                    <div class="space-y-3">
+                        <div>
+                            <h5 class="font-medium text-gray-900 mb-2">Contributing Factors</h5>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                ${prediction.contributing_factors.map(f => `<li><i class="fas fa-dot-circle text-gray-400 mr-2"></i>${f}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 class="font-medium text-gray-900 mb-2">Recommended Actions</h5>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                ${prediction.recommended_actions.map(a => `<li><i class="fas fa-arrow-right text-blue-500 mr-2"></i>${a}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                resultsDiv.appendChild(predictionCard);
+            });
+        }
+
+        function createForecastCharts(historicalData) {
+            // Sentiment Forecast Chart
+            const sentimentCtx = document.getElementById('sentimentForecastChart').getContext('2d');
+            new Chart(sentimentCtx, {
+                type: 'line',
+                data: {
+                    labels: historicalData.slice(-30).map(d => new Date(d.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Historical Sentiment',
+                        data: historicalData.slice(-30).map(d => d.sentiment),
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: -1,
+                            max: 1
+                        }
+                    }
+                }
+            });
+
+            // Volume Prediction Chart
+            const volumeCtx = document.getElementById('volumePredictionChart').getContext('2d');
+            new Chart(volumeCtx, {
+                type: 'bar',
+                data: {
+                    labels: historicalData.slice(-30).map(d => new Date(d.date).toLocaleDateString()),
+                    datasets: [{
+                        label: 'Review Volume',
+                        data: historicalData.slice(-30).map(d => d.volume),
+                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                        borderColor: 'rgb(34, 197, 94)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
+
