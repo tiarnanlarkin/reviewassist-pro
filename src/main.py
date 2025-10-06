@@ -25,6 +25,7 @@ from src.routes.advanced_analytics import advanced_analytics_bp
 from src.routes.payments import payments_bp
 from src.routes.platform_sync import platform_sync_bp
 from src.routes.ai_features import ai_features_bp
+from src.routes.enterprise import enterprise_bp
 from src.models.auth import AuthUser, UserRole
 from src.routes.realtime import socketio
 
@@ -48,6 +49,7 @@ app.register_blueprint(advanced_analytics_bp, url_prefix='/api/advanced-analytic
 app.register_blueprint(payments_bp, url_prefix='/api/payments')
 app.register_blueprint(platform_sync_bp)
 app.register_blueprint(ai_features_bp, url_prefix='/api/ai')
+app.register_blueprint(enterprise_bp, url_prefix='/api/enterprise')
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"

@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Management - ReviewAssist Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-blue-600 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">
+                <i class="fas fa-building mr-2"></i>
+                Enterprise Management
+            </h1>
+            <div class="flex items-center space-x-4">
+                <select id="organizationSelector" class="bg-blue-700 text-white rounded px-3 py-1">
+                    <option value="">Select Organization</option>
+                </select>
+                <button onclick="window.location.href='/'" class="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded">
+                    <i class="fas fa-home mr-2"></i>Dashboard
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto p-6" x-data="enterpriseApp()">
+        <!-- Organization Overview -->
+        <div x-show="currentOrganization" class="mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800" x-text="currentOrganization?.name"></h2>
+                        <p class="text-gray-600" x-text="currentOrganization?.description"></p>
+                        <div class="flex items-center mt-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800" x-text="currentOrganization?.tier"></span>
+                            <span class="ml-2 text-sm text-gray-500" x-text="`${currentOrganization?.stats?.total_users || 0} users`"></span>
+                        </div>
+                    </div>
+                    <button @click="showEditOrganization = true" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                        <i class="fas fa-edit mr-2"></i>Edit
+                    </button>
+                </div>
+
+                <!-- Organization Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-users text-blue-600 text-2xl mr-3"></i>
+                            <div>
+                                <p class="text-sm text-gray-600">Total Users</p>
+                                <p class="text-xl font-bold text-gray-800" x-text="currentOrganization?.stats?.total_users || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-user-friends text-green-600 text-2xl mr-3"></i>
+                            <div>
+                                <p class="text-sm text-gray-600">Teams</p>
+                                <p class="text-xl font-bold text-gray-800" x-text="currentOrganization?.stats?.total_teams || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-map-marker-alt text-purple-600 text-2xl mr-3"></i>
+                            <div>
+                                <p class="text-sm text-gray-600">Locations</p>
+                                <p class="text-xl font-bold text-gray-800" x-text="currentOrganization?.stats?.total_locations || 0"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-orange-50 p-4 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-chart-line text-orange-600 text-2xl mr-3"></i>
+                            <div>
+                                <p class="text-sm text-gray-600">Active Since</p>
+                                <p class="text-sm font-bold text-gray-800" x-text="formatDate(currentOrganization?.created_at)"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="mb-6">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <button @click="activeTab = 'users'" 
+                            :class="activeTab === 'users' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-users mr-2"></i>Users
+                    </button>
+                    <button @click="activeTab = 'teams'" 
+                            :class="activeTab === 'teams' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-user-friends mr-2"></i>Teams
+                    </button>
+                    <button @click="activeTab = 'locations'" 
+                            :class="activeTab === 'locations' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-map-marker-alt mr-2"></i>Locations
+                    </button>
+                    <button @click="activeTab = 'permissions'" 
+                            :class="activeTab === 'permissions' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-shield-alt mr-2"></i>Permissions
+                    </button>
+                    <button @click="activeTab = 'branding'" 
+                            :class="activeTab === 'branding' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-palette mr-2"></i>Branding
+                    </button>
+                    <button @click="activeTab = 'audit'" 
+                            :class="activeTab === 'audit' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        <i class="fas fa-history mr-2"></i>Audit Logs
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div x-show="activeTab === 'users'" class="bg-white rounded-lg shadow-md">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-800">Organization Users</h3>
+                    <button @click="showInviteUser = true" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                        <i class="fas fa-user-plus mr-2"></i>Invite User
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="user in users" :key="user.id">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-10 w-10">
+                                                <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold" x-text="user.full_name?.charAt(0) || 'U'"></div>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900" x-text="user.full_name"></div>
+                                                <div class="text-sm text-gray-500" x-text="user.email"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                              :class="getRoleColor(user.role)" x-text="user.role"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(user.joined_at)"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(user.last_active)"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button @click="editUser(user)" class="text-blue-600 hover:text-blue-900 mr-3">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button @click="removeUser(user)" class="text-red-600 hover:text-red-900">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teams Tab -->
+        <div x-show="activeTab === 'teams'" class="bg-white rounded-lg shadow-md">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-800">Teams</h3>
+                    <button @click="showCreateTeam = true" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                        <i class="fas fa-plus mr-2"></i>Create Team
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <template x-for="team in teams" :key="team.id">
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start mb-3">
+                                <h4 class="text-lg font-semibold text-gray-800" x-text="team.name"></h4>
+                                <div class="flex space-x-2">
+                                    <button @click="editTeam(team)" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button @click="deleteTeam(team)" class="text-red-600 hover:text-red-800">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 text-sm mb-3" x-text="team.description"></p>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-users mr-2"></i>
+                                <span x-text="`${team.member_count || 0} members`"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Locations Tab -->
+        <div x-show="activeTab === 'locations'" class="bg-white rounded-lg shadow-md">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-800">Business Locations</h3>
+                    <button @click="showCreateLocation = true" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                        <i class="fas fa-plus mr-2"></i>Add Location
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <template x-for="location in locations" :key="location.id">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex justify-between items-start mb-3">
+                                <h4 class="text-lg font-semibold text-gray-800" x-text="location.name"></h4>
+                                <div class="flex space-x-2">
+                                    <button @click="editLocation(location)" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button @click="deleteLocation(location)" class="text-red-600 hover:text-red-800">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="space-y-2 text-sm text-gray-600">
+                                <div x-show="location.address" class="flex items-start">
+                                    <i class="fas fa-map-marker-alt mr-2 mt-1"></i>
+                                    <span x-text="location.address"></span>
+                                </div>
+                                <div x-show="location.phone" class="flex items-center">
+                                    <i class="fas fa-phone mr-2"></i>
+                                    <span x-text="location.phone"></span>
+                                </div>
+                                <div x-show="location.email" class="flex items-center">
+                                    <i class="fas fa-envelope mr-2"></i>
+                                    <span x-text="location.email"></span>
+                                </div>
+                                <div x-show="location.website" class="flex items-center">
+                                    <i class="fas fa-globe mr-2"></i>
+                                    <a :href="location.website" target="_blank" class="text-blue-600 hover:text-blue-800" x-text="location.website"></a>
+                                </div>
+                            </div>
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <span x-show="location.google_place_id" class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">
+                                    <i class="fab fa-google mr-1"></i>Google
+                                </span>
+                                <span x-show="location.yelp_business_id" class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                                    <i class="fab fa-yelp mr-1"></i>Yelp
+                                </span>
+                                <span x-show="location.facebook_page_id" class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                                    <i class="fab fa-facebook mr-1"></i>Facebook
+                                </span>
+                                <span x-show="location.tripadvisor_location_id" class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                                    <i class="fas fa-map-signs mr-1"></i>TripAdvisor
+                                </span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Permissions Tab -->
+        <div x-show="activeTab === 'permissions'" class="bg-white rounded-lg shadow-md">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Roles & Permissions</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Roles -->
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-md font-semibold text-gray-700">Roles</h4>
+                            <button @click="showCreateRole = true" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+                                <i class="fas fa-plus mr-1"></i>Add Role
+                            </button>
+                        </div>
+                        <div class="space-y-3">
+                            <template x-for="role in roles" :key="role.id">
+                                <div class="border border-gray-200 rounded-lg p-3">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h5 class="font-semibold text-gray-800" x-text="role.name"></h5>
+                                            <p class="text-sm text-gray-600" x-text="role.description"></p>
+                                            <div class="mt-2">
+                                                <span class="text-xs text-gray-500" x-text="`${role.permissions?.length || 0} permissions`"></span>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button @click="editRole(role)" class="text-blue-600 hover:text-blue-800">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button x-show="!role.is_system_role" @click="deleteRole(role)" class="text-red-600 hover:text-red-800">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Permissions -->
+                    <div>
+                        <h4 class="text-md font-semibold text-gray-700 mb-4">Available Permissions</h4>
+                        <div class="space-y-2 max-h-96 overflow-y-auto">
+                            <template x-for="permission in permissions" :key="permission.id">
+                                <div class="border border-gray-200 rounded p-2">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <span class="font-medium text-sm" x-text="permission.name"></span>
+                                            <p class="text-xs text-gray-600" x-text="permission.description"></p>
+                                        </div>
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs"
+                                              :class="getPermissionColor(permission.action)" x-text="permission.action"></span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Branding Tab -->
+        <div x-show="activeTab === 'branding'" class="bg-white rounded-lg shadow-md">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">White Label Branding</h3>
+            </div>
+            <div class="p-6">
+                <form @submit.prevent="saveBranding()" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">App Name</label>
+                            <input type="text" x-model="brandingConfig.app_name" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Custom Domain</label>
+                            <input type="text" x-model="brandingConfig.custom_domain" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
+                            <input type="url" x-model="brandingConfig.logo_url" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Favicon URL</label>
+                            <input type="url" x-model="brandingConfig.favicon_url" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
+                            <input type="color" x-model="brandingConfig.primary_color" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
+                            <input type="color" x-model="brandingConfig.secondary_color" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Custom CSS</label>
+                        <textarea x-model="brandingConfig.custom_css" rows="6" class="w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
+                    </div>
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded">
+                            <i class="fas fa-save mr-2"></i>Save Branding
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Audit Logs Tab -->
+        <div x-show="activeTab === 'audit'" class="bg-white rounded-lg shadow-md">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-800">Audit Logs</h3>
+                    <div class="flex space-x-2">
+                        <select x-model="auditFilters.action" @change="loadAuditLogs()" class="border border-gray-300 rounded px-3 py-1 text-sm">
+                            <option value="">All Actions</option>
+                            <option value="create">Create</option>
+                            <option value="update">Update</option>
+                            <option value="delete">Delete</option>
+                            <option value="login">Login</option>
+                            <option value="logout">Logout</option>
+                        </select>
+                        <select x-model="auditFilters.resource_type" @change="loadAuditLogs()" class="border border-gray-300 rounded px-3 py-1 text-sm">
+                            <option value="">All Resources</option>
+                            <option value="organization">Organization</option>
+                            <option value="user">User</option>
+                            <option value="team">Team</option>
+                            <option value="location">Location</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resource</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="log in auditLogs" :key="log.id">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDateTime(log.timestamp)"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="log.user_id"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                              :class="getActionColor(log.action)" x-text="log.action"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="log.resource_type"></td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">
+                                        <button @click="showAuditDetails(log)" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function enterpriseApp() {
+            return {
+                activeTab: 'users',
+                currentOrganization: null,
+                organizations: [],
+                users: [],
+                teams: [],
+                locations: [],
+                roles: [],
+                permissions: [],
+                auditLogs: [],
+                brandingConfig: {},
+                auditFilters: {
+                    action: '',
+                    resource_type: ''
+                },
+                showEditOrganization: false,
+                showInviteUser: false,
+                showCreateTeam: false,
+                showCreateLocation: false,
+                showCreateRole: false,
+
+                async init() {
+                    await this.loadOrganizations();
+                    await this.loadPermissions();
+                },
+
+                async loadOrganizations() {
+                    try {
+                        const response = await fetch('/api/enterprise/organizations', {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                            }
+                        });
+                        const data = await response.json();
+                        this.organizations = data.organizations || [];
+                        
+                        // Populate selector
+                        const selector = document.getElementById('organizationSelector');
+                        selector.innerHTML = '<option value="">Select Organization</option>';
+                        this.organizations.forEach(org => {
+                            const option = document.createElement('option');
+                            option.value = org.id;
+                            option.textContent = org.name;
+                            selector.appendChild(option);
+                        });
+
+                        // Auto-select first organization
+                        if (this.organizations.length > 0) {
+                            this.selectOrganization(this.organizations[0].id);
+                            selector.value = this.organizations[0].id;
+                        }
+                    } catch (error) {
+                        console.error('Failed to load organizations:', error);
+                    }
+                },
+
+                async selectOrganization(orgId) {
+                    this.currentOrganization = this.organizations.find(org => org.id === orgId);
+                    if (this.currentOrganization) {
+                        await this.loadOrganizationData();
+                    }
+                },
+
+                async loadOrganizationData() {
+                    if (!this.currentOrganization) return;
+
+                    const orgId = this.currentOrganization.id;
+                    const headers = {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                        'X-Organization-ID': orgId
+                    };
+
+                    try {
+                        // Load organization details
+                        const orgResponse = await fetch(`/api/enterprise/organizations/${orgId}`, { headers });
+                        const orgData = await orgResponse.json();
+                        this.currentOrganization = orgData.organization;
+
+                        // Load users, teams, locations based on active tab
+                        await this.loadUsers();
+                        await this.loadTeams();
+                        await this.loadLocations();
+                        await this.loadRoles();
+                        await this.loadBrandingConfig();
+                    } catch (error) {
+                        console.error('Failed to load organization data:', error);
+                    }
+                },
+
+                async loadUsers() {
+                    if (!this.currentOrganization) return;
+                    
+                    try {
+                        const response = await fetch(`/api/enterprise/organizations/${this.currentOrganization.id}/users`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                                'X-Organization-ID': this.currentOrganization.id
+                            }
+                        });
+                        const data = await response.json();
+                        this.users = data.users || [];
+                    } catch (error) {
+                        console.error('Failed to load users:', error);
+                    }
+                },
+
+                async loadTeams() {
+                    if (!this.currentOrganization) return;
+                    
+                    try {
+                        const response = await fetch(`/api/enterprise/organizations/${this.currentOrganization.id}/teams`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                                'X-Organization-ID': this.currentOrganization.id
+                            }
+                        });
+                        const data = await response.json();
+                        this.teams = data.teams || [];
+                    } catch (error) {
+                        console.error('Failed to load teams:', error);
+                    }
+                },
+
+                async loadLocations() {
+                    if (!this.currentOrganization) return;
+                    
+                    try {
+                        const response = await fetch(`/api/enterprise/organizations/${this.currentOrganization.id}/locations`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                                'X-Organization-ID': this.currentOrganization.id
+                            }
+                        });
+                        const data = await response.json();
+                        this.locations = data.locations || [];
+                    } catch (error) {
+                        console.error('Failed to load locations:', error);
+                    }
+                },
+
+                async loadRoles() {
+                    if (!this.currentOrganization) return;
+                    
+                    try {
+                        const response = await fetch(`/api/enterprise/organizations/${this.currentOrganization.id}/roles`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                                'X-Organization-ID': this.currentOrganization.id
+                            }
+                        });
+                        const data = await response.json();
+                        this.roles = data.roles || [];
+                    } catch (error) {
+                        console.error('Failed to load roles:', error);
+                    }
+                },
+
+                async loadPermissions() {
+                    try {
+                        const response = await fetch('/api/enterprise/permissions', {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                            }
+                        });
+                        const data = await response.json();
+                        this.permissions = data.permissions || [];
+                    } catch (error) {
+                        console.error('Failed to load permissions:', error);
+                    }
+                },
+
+                async loadBrandingConfig() {
+                    if (!this.currentOrganization) return;
+                    
+                    try {
+                        const response = await fetch(`/api/enterprise/organizations/${this.currentOrganization.id}/whitelabel`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                                'X-Organization-ID': this.currentOrganization.id
+                            }
+                        });
+                        const data = await response.json();
+                        this.brandingConfig = data.whitelabel_config || {};
+                    } catch (error) {
+                        console.error('Failed to load branding config:', error);
+                    }
+                },
+
+                async loadAuditLogs() {
+                    if (!this.currentOrganization) return;
+                    
+                    try {
+                        const params = new URLSearchParams();
+                        if (this.auditFilters.action) params.append('action', this.auditFilters.action);
+                        if (this.auditFilters.resource_type) params.append('resource_type', this.auditFilters.resource_type);
+                        
+                        const response = await fetch(`/api/enterprise/organizations/${this.currentOrganization.id}/audit-logs?${params}`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                                'X-Organization-ID': this.currentOrganization.id
+                            }
+                        });
+                        const data = await response.json();
+                        this.auditLogs = data.audit_logs || [];
+                    } catch (error) {
+                        console.error('Failed to load audit logs:', error);
+                    }
+                },
+
+                async saveBranding() {
+                    if (!this.currentOrganization) return;
+                    
+                    try {
+                        const response = await fetch(`/api/enterprise/organizations/${this.currentOrganization.id}/whitelabel`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                                'X-Organization-ID': this.currentOrganization.id
+                            },
+                            body: JSON.stringify(this.brandingConfig)
+                        });
+                        
+                        if (response.ok) {
+                            alert('Branding configuration saved successfully!');
+                        } else {
+                            alert('Failed to save branding configuration');
+                        }
+                    } catch (error) {
+                        console.error('Failed to save branding:', error);
+                        alert('Failed to save branding configuration');
+                    }
+                },
+
+                // Utility functions
+                formatDate(dateString) {
+                    if (!dateString) return 'N/A';
+                    return new Date(dateString).toLocaleDateString();
+                },
+
+                formatDateTime(dateString) {
+                    if (!dateString) return 'N/A';
+                    return new Date(dateString).toLocaleString();
+                },
+
+                getRoleColor(role) {
+                    const colors = {
+                        'admin': 'bg-red-100 text-red-800',
+                        'manager': 'bg-blue-100 text-blue-800',
+                        'member': 'bg-green-100 text-green-800'
+                    };
+                    return colors[role] || 'bg-gray-100 text-gray-800';
+                },
+
+                getPermissionColor(action) {
+                    const colors = {
+                        'read': 'bg-green-100 text-green-800',
+                        'write': 'bg-blue-100 text-blue-800',
+                        'delete': 'bg-red-100 text-red-800',
+                        'admin': 'bg-purple-100 text-purple-800'
+                    };
+                    return colors[action] || 'bg-gray-100 text-gray-800';
+                },
+
+                getActionColor(action) {
+                    const colors = {
+                        'create': 'bg-green-100 text-green-800',
+                        'update': 'bg-blue-100 text-blue-800',
+                        'delete': 'bg-red-100 text-red-800',
+                        'login': 'bg-purple-100 text-purple-800',
+                        'logout': 'bg-gray-100 text-gray-800'
+                    };
+                    return colors[action] || 'bg-gray-100 text-gray-800';
+                },
+
+                // Event handlers
+                editUser(user) {
+                    // Implement user editing
+                    console.log('Edit user:', user);
+                },
+
+                removeUser(user) {
+                    // Implement user removal
+                    console.log('Remove user:', user);
+                },
+
+                editTeam(team) {
+                    // Implement team editing
+                    console.log('Edit team:', team);
+                },
+
+                deleteTeam(team) {
+                    // Implement team deletion
+                    console.log('Delete team:', team);
+                },
+
+                editLocation(location) {
+                    // Implement location editing
+                    console.log('Edit location:', location);
+                },
+
+                deleteLocation(location) {
+                    // Implement location deletion
+                    console.log('Delete location:', location);
+                },
+
+                editRole(role) {
+                    // Implement role editing
+                    console.log('Edit role:', role);
+                },
+
+                deleteRole(role) {
+                    // Implement role deletion
+                    console.log('Delete role:', role);
+                },
+
+                showAuditDetails(log) {
+                    // Show audit log details
+                    alert(JSON.stringify(log.details, null, 2));
+                }
+            }
+        }
+
+        // Organization selector change handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const selector = document.getElementById('organizationSelector');
+            selector.addEventListener('change', function() {
+                const app = Alpine.$data(document.querySelector('[x-data]'));
+                if (this.value) {
+                    app.selectOrganization(this.value);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
