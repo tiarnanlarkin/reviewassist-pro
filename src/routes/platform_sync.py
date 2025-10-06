@@ -4,7 +4,7 @@ import logging
 from datetime import datetime, timedelta
 from src.models.user import db
 from src.models.auth import AuthUser
-from src.models.review import Review, ReviewResponse
+from src.models.review import Review, Analytics, ResponseTemplate
 from src.models.integrations import Integration, IntegrationSyncLog
 from src.routes.auth import token_required
 from src.services.platform_apis import platform_manager, ReviewData, LocationData

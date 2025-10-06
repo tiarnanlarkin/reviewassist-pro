@@ -8,8 +8,7 @@ from src.models.user import db
 from src.models.auth import AuthUser
 from src.models.subscription import (
     SubscriptionPlan, UserSubscription, SubscriptionStatus, 
-    BillingCycle, PlanType, PaymentMethod, Invoice, 
-    SubscriptionUsage, FeatureType
+    BillingCycle, PlanType, FeatureUsage, FeatureType
 )
 from src.routes.auth import token_required
 from sqlalchemy import func
