@@ -203,6 +203,7 @@ class WebhookDelivery(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     endpoint_id = db.Column(db.Integer, db.ForeignKey('webhook_endpoints.id'), nullable=False)
+    integration_id = db.Column(db.Integer, db.ForeignKey('integrations.id'), nullable=False)
     event_type = db.Column(db.Enum(WebhookEventType), nullable=False)
     
     # Delivery details
@@ -445,41 +446,178 @@ class IntegrationManager:
                 'status': 'connected'
             }
         }
-    
+
     @staticmethod
-    def sync_integration(integration_id, sync_type='manual'):
-        """Trigger integration sync"""
+    def update_integration(integration_id, **kwargs):
+        """Update an existing integration"""
         integration = Integration.query.get(integration_id)
         if not integration:
-            return {'success': False, 'message': 'Integration not found'}
+            return None
         
-        # Create sync log
-        sync_log = IntegrationSyncLog(
+        for key, value in kwargs.items():
+            if hasattr(integration, key):
+                setattr(integration, key, value)
+        
+        db.session.commit()
+        return integration
+
+    @staticmethod
+    def delete_integration(integration_id):
+        """Delete an integration"""
+        integration = Integration.query.get(integration_id)
+        if not integration:
+            return False
+        
+        db.session.delete(integration)
+        db.session.commit()
+        return True
+
+    @staticmethod
+    def log_sync_event(integration_id, sync_type, status, records_processed=0, records_created=0, records_updated=0, records_failed=0, error_message=None, duration_seconds=None):
+        """Log an integration sync event"""
+        log = IntegrationSyncLog(
             integration_id=integration_id,
             sync_type=sync_type,
-            status='running',
+            status=status,
+            records_processed=records_processed,
+            records_created=records_created,
+            records_updated=records_updated,
+            records_failed=records_failed,
+            error_message=error_message,
+            duration_seconds=duration_seconds,
             started_at=datetime.utcnow()
         )
-        db.session.add(sync_log)
+        db.session.add(log)
         db.session.commit()
+        return log
+
+class WebhookManager:
+    """Helper class for webhook management operations"""
+
+    @staticmethod
+    def create_webhook_endpoint(user_id, name, url, events, max_retries=3, retry_delay=60):
+        """Create a new webhook endpoint"""
+        endpoint = WebhookEndpoint(
+            user_id=user_id,
+            name=name,
+            url=url,
+            max_retries=max_retries,
+            retry_delay=retry_delay
+        )
+        endpoint.set_events(events)
+        db.session.add(endpoint)
+        db.session.commit()
+        return endpoint
+
+    @staticmethod
+    def update_webhook_endpoint(endpoint_id, **kwargs):
+        """Update an existing webhook endpoint"""
+        endpoint = WebhookEndpoint.query.get(endpoint_id)
+        if not endpoint:
+            return None
         
-        # Implementation would depend on integration type
-        # For now, return a mock success response
-        sync_log.status = 'success'
-        sync_log.records_processed = 25
-        sync_log.records_created = 5
-        sync_log.records_updated = 20
-        sync_log.duration_seconds = 2.5
-        sync_log.completed_at = datetime.utcnow()
-        
-        integration.last_sync_at = datetime.utcnow()
-        integration.status = IntegrationStatus.ACTIVE
+        for key, value in kwargs.items():
+            if key == 'events':
+                endpoint.set_events(value)
+            elif hasattr(endpoint, key):
+                setattr(endpoint, key, value)
         
         db.session.commit()
+        return endpoint
+
+    @staticmethod
+    def delete_webhook_endpoint(endpoint_id):
+        """Delete a webhook endpoint"""
+        endpoint = WebhookEndpoint.query.get(endpoint_id)
+        if not endpoint:
+            return False
         
-        return {
-            'success': True,
-            'message': 'Sync completed successfully',
-            'sync_log': sync_log.to_dict()
-        }
+        db.session.delete(endpoint)
+        db.session.commit()
+        return True
+
+    @staticmethod
+    def record_delivery(endpoint_id, event_type, payload, response_status=None, response_body=None, response_headers=None, is_successful=False, attempt_count=1, next_retry_at=None):
+        """Record a webhook delivery attempt"""
+        delivery = WebhookDelivery(
+            endpoint_id=endpoint_id,
+            event_type=event_type,
+            payload=payload,
+            response_status=response_status,
+            response_body=response_body,
+            response_headers=response_headers,
+            is_successful=is_successful,
+            attempt_count=attempt_count,
+            next_retry_at=next_retry_at,
+            delivered_at=datetime.utcnow() if is_successful else None
+        )
+        db.session.add(delivery)
+        db.session.commit()
+        return delivery
+
+class APIKeyManager:
+    """Helper class for API key management operations"""
+
+    @staticmethod
+    def create_api_key(user_id, name, scopes, rate_limit_per_hour=1000, rate_limit_per_day=10000, expires_at=None):
+        """Create a new API key"""
+        api_key_obj = APIKey(
+            user_id=user_id,
+            name=name,
+            rate_limit_per_hour=rate_limit_per_hour,
+            rate_limit_per_day=rate_limit_per_day,
+            expires_at=expires_at
+        )
+        api_key_obj.set_scopes(scopes)
+        db.session.add(api_key_obj)
+        db.session.commit()
+        return api_key_obj, api_key_obj._generated_key
+
+    @staticmethod
+    def update_api_key(api_key_id, **kwargs):
+        """Update an existing API key"""
+        api_key_obj = APIKey.query.get(api_key_id)
+        if not api_key_obj:
+            return None
+        
+        for key, value in kwargs.items():
+            if key == 'scopes':
+                api_key_obj.set_scopes(value)
+            elif hasattr(api_key_obj, key):
+                setattr(api_key_obj, key, value)
+        
+        db.session.commit()
+        return api_key_obj
+
+    @staticmethod
+    def delete_api_key(api_key_id):
+        """Delete an API key"""
+        api_key_obj = APIKey.query.get(api_key_id)
+        if not api_key_obj:
+            return False
+        
+        db.session.delete(api_key_obj)
+        db.session.commit()
+        return True
+
+    @staticmethod
+    def get_api_key_by_prefix(key_prefix):
+        """Get API key by its prefix"""
+        return APIKey.query.filter_by(key_prefix=key_prefix, is_active=True).first()
+
+    @staticmethod
+    def log_api_usage(api_key_id, endpoint, method, ip_address=None, user_agent=None, status_code=None, response_time_ms=None):
+        """Log API key usage"""
+        log = APIUsageLog(
+            api_key_id=api_key_id,
+            endpoint=endpoint,
+            method=method,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            status_code=status_code,
+            response_time_ms=response_time_ms
+        )
+        db.session.add(log)
+        db.session.commit()
+        return log
 

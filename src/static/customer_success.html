@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Success - ReviewAssist Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-semibold text-gray-900">Customer Success Center</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8" x-data="customerSuccessApp()">
+        <!-- Tab Navigation -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8">
+                <button @click="activeTab = 'help'" 
+                        :class="activeTab === 'help' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-question-circle mr-2"></i>Help Center
+                </button>
+                <button @click="activeTab = 'support'" 
+                        :class="activeTab === 'support' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-headset mr-2"></i>Support
+                </button>
+                <button @click="activeTab = 'tutorials'" 
+                        :class="activeTab === 'tutorials' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-play-circle mr-2"></i>Video Tutorials
+                </button>
+                <button @click="activeTab = 'health'" 
+                        :class="activeTab === 'health' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-heart mr-2"></i>Success Tracking
+                </button>
+                <button @click="activeTab = 'chat'" 
+                        :class="activeTab === 'chat' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-comments mr-2"></i>Live Chat
+                </button>
+            </nav>
+        </div>
+
+        <!-- Help Center Tab -->
+        <div x-show="activeTab === 'help'" class="space-y-6">
+            <!-- Search Bar -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="max-w-md mx-auto">
+                    <div class="relative">
+                        <input type="text" 
+                               x-model="helpSearch"
+                               @input="searchHelpArticles()"
+                               placeholder="Search help articles..."
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Categories -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="category in helpCategories" :key="category.id">
+                    <div class="bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer"
+                         @click="selectHelpCategory(category.id)">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 rounded-lg flex items-center justify-center"
+                                     :style="`background-color: ${category.color}20`">
+                                    <i :class="`fas fa-${category.icon} text-xl`" :style="`color: ${category.color}`"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <h3 class="text-lg font-semibold text-gray-900" x-text="category.name"></h3>
+                                    <p class="text-sm text-gray-500" x-text="`${category.article_count} articles`"></p>
+                                </div>
+                            </div>
+                            <p class="text-gray-600" x-text="category.description"></p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Featured Articles -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Featured Articles</h3>
+                </div>
+                <div class="divide-y divide-gray-200">
+                    <template x-for="article in featuredArticles" :key="article.id">
+                        <div class="p-6 hover:bg-gray-50 cursor-pointer" @click="viewHelpArticle(article.slug)">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h4 class="text-lg font-medium text-gray-900 mb-2" x-text="article.title"></h4>
+                                    <p class="text-gray-600 mb-3" x-text="article.excerpt"></p>
+                                    <div class="flex items-center text-sm text-gray-500">
+                                        <i class="fas fa-eye mr-1"></i>
+                                        <span x-text="`${article.view_count} views`"></span>
+                                        <span class="mx-2">•</span>
+                                        <i class="fas fa-thumbs-up mr-1"></i>
+                                        <span x-text="`${article.helpful_votes} helpful`"></span>
+                                    </div>
+                                </div>
+                                <i class="fas fa-star text-yellow-400 ml-4"></i>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Tab -->
+        <div x-show="activeTab === 'support'" class="space-y-6">
+            <!-- Create Ticket Button -->
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-gray-900">Support Tickets</h2>
+                <button @click="showCreateTicket = true"
+                        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Create Ticket
+                </button>
+            </div>
+
+            <!-- Ticket Filters -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <div class="flex flex-wrap gap-4">
+                    <select x-model="ticketStatusFilter" @change="filterTickets()"
+                            class="border border-gray-300 rounded-lg px-3 py-2">
+                        <option value="">All Statuses</option>
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="waiting_for_customer">Waiting for Customer</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                    <select x-model="ticketPriorityFilter" @change="filterTickets()"
+                            class="border border-gray-300 rounded-lg px-3 py-2">
+                        <option value="">All Priorities</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Support Tickets List -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="divide-y divide-gray-200">
+                    <template x-for="ticket in filteredTickets" :key="ticket.id">
+                        <div class="p-6 hover:bg-gray-50 cursor-pointer" @click="viewTicket(ticket.id)">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center mb-2">
+                                        <span class="text-sm font-medium text-gray-500" x-text="ticket.ticket_number"></span>
+                                        <span class="mx-2 text-gray-300">•</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                              :class="getStatusColor(ticket.status)" x-text="ticket.status.replace('_', ' ')"></span>
+                                        <span class="mx-2 text-gray-300">•</span>
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                              :class="getPriorityColor(ticket.priority)" x-text="ticket.priority"></span>
+                                    </div>
+                                    <h4 class="text-lg font-medium text-gray-900 mb-2" x-text="ticket.subject"></h4>
+                                    <p class="text-gray-600 mb-3" x-text="ticket.description.substring(0, 150) + '...'"></p>
+                                    <div class="flex items-center text-sm text-gray-500">
+                                        <i class="fas fa-calendar mr-1"></i>
+                                        <span x-text="formatDate(ticket.created_at)"></span>
+                                        <template x-if="ticket.category">
+                                            <span class="mx-2">•</span>
+                                            <i class="fas fa-tag mr-1"></i>
+                                            <span x-text="ticket.category"></span>
+                                        </template>
+                                    </div>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-400 ml-4"></i>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Tutorials Tab -->
+        <div x-show="activeTab === 'tutorials'" class="space-y-6">
+            <!-- Tutorial Filters -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <div class="flex flex-wrap gap-4">
+                    <select x-model="tutorialCategoryFilter" @change="filterTutorials()"
+                            class="border border-gray-300 rounded-lg px-3 py-2">
+                        <option value="">All Categories</option>
+                        <option value="Getting Started">Getting Started</option>
+                        <option value="Integrations">Integrations</option>
+                        <option value="Analytics">Analytics</option>
+                        <option value="Advanced Features">Advanced Features</option>
+                    </select>
+                    <select x-model="tutorialDifficultyFilter" @change="filterTutorials()"
+                            class="border border-gray-300 rounded-lg px-3 py-2">
+                        <option value="">All Levels</option>
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Video Tutorials Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="video in filteredTutorials" :key="video.id">
+                    <div class="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+                        <div class="aspect-w-16 aspect-h-9 bg-gray-200 rounded-t-lg relative">
+                            <div class="flex items-center justify-center">
+                                <button @click="playVideo(video.id)" 
+                                        class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-play text-white text-xl ml-1"></i>
+                                </button>
+                            </div>
+                            <template x-if="video.is_featured">
+                                <div class="absolute top-2 right-2">
+                                    <span class="bg-yellow-400 text-yellow-900 px-2 py-1 rounded-full text-xs font-medium">
+                                        Featured
+                                    </span>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2" x-text="video.title"></h3>
+                            <p class="text-gray-600 text-sm mb-3" x-text="video.description"></p>
+                            <div class="flex items-center justify-between text-sm text-gray-500">
+                                <div class="flex items-center">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    <span x-text="formatDuration(video.duration)"></span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    <span x-text="video.view_count"></span>
+                                </div>
+                            </div>
+                            <div class="mt-3 flex items-center justify-between">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                                      x-text="video.category"></span>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                      :class="getDifficultyColor(video.difficulty_level)" x-text="video.difficulty_level"></span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Success Tracking Tab -->
+        <div x-show="activeTab === 'health'" class="space-y-6">
+            <!-- Health Score Overview -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Success Score</h3>
+                <template x-if="healthScore">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-2xl font-bold" :class="getHealthScoreColor(healthScore.overall_score)" 
+                                  x-text="`${Math.round(healthScore.overall_score)}%`"></span>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                                  :class="getHealthStatusColor(healthScore.status)" x-text="healthScore.status.replace('_', ' ')"></span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="h-3 rounded-full transition-all duration-300"
+                                 :class="getHealthScoreColor(healthScore.overall_score)"
+                                 :style="`width: ${healthScore.overall_score}%`"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Health Score Breakdown -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-if="healthScore">
+                    <template x-for="(score, metric) in getHealthMetrics(healthScore)" :key="metric">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-sm font-medium text-gray-900" x-text="metric.replace('_', ' ')"></h4>
+                                <span class="text-lg font-semibold" :class="getHealthScoreColor(score)" 
+                                      x-text="`${Math.round(score)}%`"></span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="h-2 rounded-full transition-all duration-300"
+                                     :class="getHealthScoreColor(score)"
+                                     :style="`width: ${score}%`"></div>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+            </div>
+
+            <!-- Feature Adoption -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Feature Adoption</h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <template x-for="adoption in featureAdoption" :key="adoption.id">
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div>
+                                    <span class="font-medium text-gray-900" x-text="adoption.feature_name"></span>
+                                    <div class="text-sm text-gray-500">
+                                        <span x-text="`Used ${adoption.usage_count} times`"></span>
+                                        <template x-if="adoption.is_power_user">
+                                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                                Power User
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+                                <i class="fas fa-check-circle text-green-500"></i>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Onboarding Progress -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Onboarding Progress</h3>
+                </div>
+                <div class="p-6">
+                    <template x-if="onboardingProgress">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-900">Overall Completion</span>
+                                <span class="text-sm font-semibold text-blue-600" 
+                                      x-text="`${Math.round(onboardingProgress.overall_completion)}%`"></span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                     :style="`width: ${onboardingProgress.overall_completion}%`"></div>
+                            </div>
+                            <div class="text-sm text-gray-500">
+                                <span x-text="`${onboardingProgress.completed_steps} of ${onboardingProgress.total_steps} steps completed`"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Chat Tab -->
+        <div x-show="activeTab === 'chat'" class="space-y-6">
+            <div class="bg-white rounded-lg shadow h-96 flex flex-col">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900">Live Chat Support</h3>
+                </div>
+                <div class="flex-1 p-6 overflow-y-auto" id="chatMessages">
+                    <template x-if="!chatSession">
+                        <div class="text-center py-8">
+                            <i class="fas fa-comments text-4xl text-gray-400 mb-4"></i>
+                            <h4 class="text-lg font-medium text-gray-900 mb-2">Start a conversation</h4>
+                            <p class="text-gray-600 mb-4">Get instant help from our support team</p>
+                            <button @click="startChatSession()"
+                                    class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                Start Chat
+                            </button>
+                        </div>
+                    </template>
+                    <template x-if="chatSession">
+                        <div class="space-y-4">
+                            <template x-for="message in chatMessages" :key="message.id">
+                                <div class="flex" :class="message.sender_type === 'visitor' ? 'justify-end' : 'justify-start'">
+                                    <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg"
+                                         :class="message.sender_type === 'visitor' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-900'">
+                                        <p x-text="message.message"></p>
+                                        <p class="text-xs mt-1 opacity-75" x-text="formatTime(message.created_at)"></p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+                <template x-if="chatSession">
+                    <div class="px-6 py-4 border-t border-gray-200">
+                        <div class="flex space-x-2">
+                            <input type="text" 
+                                   x-model="newChatMessage"
+                                   @keyup.enter="sendChatMessage()"
+                                   placeholder="Type your message..."
+                                   class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <button @click="sendChatMessage()"
+                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Create Ticket Modal -->
+        <div x-show="showCreateTicket" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Create Support Ticket</h3>
+                    <form @submit.prevent="createTicket()">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                                <input type="text" x-model="newTicket.subject" required
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                                <select x-model="newTicket.priority"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                <select x-model="newTicket.category"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">Select Category</option>
+                                    <option value="Technical Issue">Technical Issue</option>
+                                    <option value="Billing">Billing</option>
+                                    <option value="Feature Request">Feature Request</option>
+                                    <option value="General Question">General Question</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <textarea x-model="newTicket.description" rows="4" required
+                                          class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-3 mt-6">
+                            <button type="button" @click="showCreateTicket = false"
+                                    class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                                Cancel
+                            </button>
+                            <button type="submit"
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                                Create Ticket
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function customerSuccessApp() {
+            return {
+                activeTab: 'help',
+                helpCategories: [],
+                featuredArticles: [],
+                helpSearch: '',
+                supportTickets: [],
+                filteredTickets: [],
+                ticketStatusFilter: '',
+                ticketPriorityFilter: '',
+                showCreateTicket: false,
+                newTicket: {
+                    subject: '',
+                    description: '',
+                    priority: 'medium',
+                    category: ''
+                },
+                videoTutorials: [],
+                filteredTutorials: [],
+                tutorialCategoryFilter: '',
+                tutorialDifficultyFilter: '',
+                healthScore: null,
+                featureAdoption: [],
+                onboardingProgress: null,
+                chatSession: null,
+                chatMessages: [],
+                newChatMessage: '',
+
+                init() {
+                    this.loadHelpData();
+                    this.loadSupportTickets();
+                    this.loadVideoTutorials();
+                    this.loadHealthScore();
+                    this.loadFeatureAdoption();
+                    this.loadOnboardingProgress();
+                },
+
+                async loadHelpData() {
+                    try {
+                        // Load categories
+                        const categoriesResponse = await fetch('/api/customer-success/help/categories');
+                        const categoriesData = await categoriesResponse.json();
+                        if (categoriesData.success) {
+                            this.helpCategories = categoriesData.categories;
+                        }
+
+                        // Load featured articles
+                        const articlesResponse = await fetch('/api/customer-success/help/articles?featured=true');
+                        const articlesData = await articlesResponse.json();
+                        if (articlesData.success) {
+                            this.featuredArticles = articlesData.articles;
+                        }
+                    } catch (error) {
+                        console.error('Error loading help data:', error);
+                    }
+                },
+
+                async loadSupportTickets() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/customer-success/support/tickets', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.supportTickets = data.tickets;
+                            this.filteredTickets = data.tickets;
+                        }
+                    } catch (error) {
+                        console.error('Error loading support tickets:', error);
+                    }
+                },
+
+                async loadVideoTutorials() {
+                    try {
+                        const response = await fetch('/api/customer-success/tutorials/videos');
+                        const data = await response.json();
+                        if (data.success) {
+                            this.videoTutorials = data.videos;
+                            this.filteredTutorials = data.videos;
+                        }
+                    } catch (error) {
+                        console.error('Error loading video tutorials:', error);
+                    }
+                },
+
+                async loadHealthScore() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/customer-success/success/health-score', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.healthScore = data.health_score;
+                        }
+                    } catch (error) {
+                        console.error('Error loading health score:', error);
+                    }
+                },
+
+                async loadFeatureAdoption() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/customer-success/success/feature-adoption', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.featureAdoption = data.feature_adoption;
+                        }
+                    } catch (error) {
+                        console.error('Error loading feature adoption:', error);
+                    }
+                },
+
+                async loadOnboardingProgress() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) return;
+
+                        const response = await fetch('/api/customer-success/success/onboarding-progress', {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.onboardingProgress = data;
+                        }
+                    } catch (error) {
+                        console.error('Error loading onboarding progress:', error);
+                    }
+                },
+
+                async createTicket() {
+                    try {
+                        const token = localStorage.getItem('token');
+                        if (!token) {
+                            alert('Please log in to create a support ticket');
+                            return;
+                        }
+
+                        const response = await fetch('/api/customer-success/support/tickets', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify(this.newTicket)
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            this.supportTickets.unshift(data.ticket);
+                            this.filteredTickets = this.supportTickets;
+                            this.showCreateTicket = false;
+                            this.newTicket = {
+                                subject: '',
+                                description: '',
+                                priority: 'medium',
+                                category: ''
+                            };
+                            alert('Support ticket created successfully!');
+                        } else {
+                            alert('Error creating ticket: ' + data.error);
+                        }
+                    } catch (error) {
+                        console.error('Error creating ticket:', error);
+                        alert('Error creating ticket');
+                    }
+                },
+
+                async startChatSession() {
+                    try {
+                        const response = await fetch('/api/customer-success/chat/sessions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                visitor_name: 'User',
+                                subject: 'General Support'
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            this.chatSession = data.session;
+                            this.loadChatMessages();
+                        }
+                    } catch (error) {
+                        console.error('Error starting chat session:', error);
+                    }
+                },
+
+                async loadChatMessages() {
+                    if (!this.chatSession) return;
+
+                    try {
+                        const response = await fetch(`/api/customer-success/chat/sessions/${this.chatSession.session_id}/messages`);
+                        const data = await response.json();
+                        if (data.success) {
+                            this.chatMessages = data.messages;
+                        }
+                    } catch (error) {
+                        console.error('Error loading chat messages:', error);
+                    }
+                },
+
+                async sendChatMessage() {
+                    if (!this.newChatMessage.trim() || !this.chatSession) return;
+
+                    try {
+                        const response = await fetch(`/api/customer-success/chat/sessions/${this.chatSession.session_id}/messages`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                message: this.newChatMessage,
+                                sender_type: 'visitor',
+                                sender_name: 'You'
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            this.chatMessages.push(data.message);
+                            this.newChatMessage = '';
+                            
+                            // Scroll to bottom
+                            setTimeout(() => {
+                                const chatContainer = document.getElementById('chatMessages');
+                                chatContainer.scrollTop = chatContainer.scrollHeight;
+                            }, 100);
+                        }
+                    } catch (error) {
+                        console.error('Error sending chat message:', error);
+                    }
+                },
+
+                filterTickets() {
+                    this.filteredTickets = this.supportTickets.filter(ticket => {
+                        const statusMatch = !this.ticketStatusFilter || ticket.status === this.ticketStatusFilter;
+                        const priorityMatch = !this.ticketPriorityFilter || ticket.priority === this.ticketPriorityFilter;
+                        return statusMatch && priorityMatch;
+                    });
+                },
+
+                filterTutorials() {
+                    this.filteredTutorials = this.videoTutorials.filter(video => {
+                        const categoryMatch = !this.tutorialCategoryFilter || video.category === this.tutorialCategoryFilter;
+                        const difficultyMatch = !this.tutorialDifficultyFilter || video.difficulty_level === this.tutorialDifficultyFilter;
+                        return categoryMatch && difficultyMatch;
+                    });
+                },
+
+                getStatusColor(status) {
+                    const colors = {
+                        'open': 'bg-blue-100 text-blue-800',
+                        'in_progress': 'bg-yellow-100 text-yellow-800',
+                        'waiting_for_customer': 'bg-orange-100 text-orange-800',
+                        'resolved': 'bg-green-100 text-green-800',
+                        'closed': 'bg-gray-100 text-gray-800'
+                    };
+                    return colors[status] || 'bg-gray-100 text-gray-800';
+                },
+
+                getPriorityColor(priority) {
+                    const colors = {
+                        'low': 'bg-gray-100 text-gray-800',
+                        'medium': 'bg-blue-100 text-blue-800',
+                        'high': 'bg-orange-100 text-orange-800',
+                        'urgent': 'bg-red-100 text-red-800'
+                    };
+                    return colors[priority] || 'bg-gray-100 text-gray-800';
+                },
+
+                getDifficultyColor(difficulty) {
+                    const colors = {
+                        'beginner': 'bg-green-100 text-green-800',
+                        'intermediate': 'bg-yellow-100 text-yellow-800',
+                        'advanced': 'bg-red-100 text-red-800'
+                    };
+                    return colors[difficulty] || 'bg-gray-100 text-gray-800';
+                },
+
+                getHealthScoreColor(score) {
+                    if (score >= 80) return 'text-green-600';
+                    if (score >= 60) return 'text-yellow-600';
+                    return 'text-red-600';
+                },
+
+                getHealthStatusColor(status) {
+                    const colors = {
+                        'healthy': 'bg-green-100 text-green-800',
+                        'at_risk': 'bg-yellow-100 text-yellow-800',
+                        'critical': 'bg-red-100 text-red-800',
+                        'churned': 'bg-gray-100 text-gray-800'
+                    };
+                    return colors[status] || 'bg-gray-100 text-gray-800';
+                },
+
+                getHealthMetrics(healthScore) {
+                    return {
+                        'Login Frequency': healthScore.login_frequency_score,
+                        'Feature Adoption': healthScore.feature_adoption_score,
+                        'Support Interaction': healthScore.support_interaction_score,
+                        'Billing Health': healthScore.billing_health_score,
+                        'Engagement': healthScore.engagement_score
+                    };
+                },
+
+                formatDate(dateString) {
+                    return new Date(dateString).toLocaleDateString();
+                },
+
+                formatTime(dateString) {
+                    return new Date(dateString).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                },
+
+                formatDuration(seconds) {
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = seconds % 60;
+                    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+                },
+
+                playVideo(videoId) {
+                    alert(`Playing video ${videoId} - Video player integration would go here`);
+                },
+
+                viewHelpArticle(slug) {
+                    window.open(`/api/customer-success/help/articles/${slug}`, '_blank');
+                },
+
+                viewTicket(ticketId) {
+                    alert(`Viewing ticket ${ticketId} - Detailed ticket view would go here`);
+                },
+
+                selectHelpCategory(categoryId) {
+                    alert(`Viewing category ${categoryId} articles - Category view would go here`);
+                },
+
+                searchHelpArticles() {
+                    // Implement search functionality
+                    console.log('Searching for:', this.helpSearch);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+

@@ -1,49 +1,49 @@
+
 import pytest
-import tempfile
-import os
-from src.main import app
-from src.models.user import db
+from src.main import create_app
+from src.models.user import db as _db
+from src.models.auth import AuthUser, UserRole
+from src.models.customer_success import HelpCategory, HelpArticle, VideoTutorial, ArticleStatus
 
-@pytest.fixture
-def client():
-    """Create a test client for the Flask application."""
-    # Create a temporary database file
-    db_fd, app.config['DATABASE'] = tempfile.mkstemp()
-    app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{app.config['DATABASE']}"
-    app.config['WTF_CSRF_ENABLED'] = False
-    
-    with app.test_client() as client:
-        with app.app_context():
-            db.create_all()
-        yield client
-    
-    os.close(db_fd)
-    os.unlink(app.config['DATABASE'])
+@pytest.fixture(scope="module")
+def app():
+    app = create_app("config.TestConfig")
+    with app.app_context():
+        _db.create_all()
+        # Create a user
+        user = AuthUser(email="test@example.com", first_name="Test", last_name="User", role=UserRole.ADMIN)
 
-@pytest.fixture
-def auth_headers():
-    """Create authentication headers for testing."""
-    # This would typically create a JWT token for testing
-    return {'Authorization': 'Bearer test-token'}
+        user.set_password("password")
+        _db.session.add(user)
+        _db.session.commit()
 
-@pytest.fixture
-def sample_user_data():
-    """Sample user data for testing."""
-    return {
-        'email': 'test@example.com',
-        'name': 'Test User'
-    }
+        # Create a help category
+        category = HelpCategory(name="Test Category", slug="test-category")
+        _db.session.add(category)
+        _db.session.commit()
 
-@pytest.fixture
-def sample_review_data():
-    """Sample review data for testing."""
-    return {
-        'reviewer_name': 'John Doe',
-        'platform': 'Google',
-        'rating': 5,
-        'review_text': 'Great service!',
-        'sentiment': 'Positive',
-        'status': 'Pending'
-    }
+        # Create a help article
+        article = HelpArticle(title="Test Article", slug="test-article", content="Test content", category_id=category.id, author_id=user.id, status=ArticleStatus.PUBLISHED, is_active=True)
+
+
+        _db.session.add(article)
+        _db.session.commit()
+
+        # Create a video tutorial
+        video = VideoTutorial(title="Test Video", description="Test Description", video_url="http://example.com/video.mp4", category="General", difficulty_level="easy", is_active=True)
+
+        _db.session.add(video)
+        _db.session.commit()
+
+        yield app
+        _db.session.remove()
+        _db.drop_all()
+
+@pytest.fixture(scope="module")
+def client(app):
+    return app.test_client()
+
+@pytest.fixture(scope="module")
+def db(app):
+    return _db
 

@@ -28,194 +28,205 @@ from src.routes.ai_features import ai_features_bp
 from src.routes.enterprise import enterprise_bp
 from src.models.auth import AuthUser, UserRole
 from src.routes.realtime import socketio
+from src.routes.customer_success import customer_success_bp # Import the customer_success blueprint
 
-app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
-app.config['SECRET_KEY'] = 'reviewassist_pro_enhanced_secret_key_2025'
+def create_app(config_name=None):
+    app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
+    app.config['SECRET_KEY'] = 'reviewassist_pro_enhanced_secret_key_2025'
 
-# Enable CORS for all routes
-CORS(app, origins="*")
+    # Enable CORS for all routes
+    CORS(app, origins="*")
 
-# Initialize SocketIO with the app
-socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
+    # Initialize SocketIO with the app
+    socketio.init_app(app, cors_allowed_origins="*", async_mode='threading')
 
-# Register blueprints
-app.register_blueprint(user_bp, url_prefix='/api')
-app.register_blueprint(review_bp, url_prefix='/api')
-app.register_blueprint(auth_bp, url_prefix='/api/auth')
-app.register_blueprint(subscription_bp, url_prefix='/api/subscription')
-app.register_blueprint(integrations_bp, url_prefix='/api/integrations')
-app.register_blueprint(onboarding_bp, url_prefix='/api/onboarding')
-app.register_blueprint(advanced_analytics_bp, url_prefix='/api/advanced-analytics')
-app.register_blueprint(payments_bp, url_prefix='/api/payments')
-app.register_blueprint(platform_sync_bp)
-app.register_blueprint(ai_features_bp, url_prefix='/api/ai')
-app.register_blueprint(enterprise_bp, url_prefix='/api/enterprise')
+    # Register blueprints
+    app.register_blueprint(user_bp, url_prefix='/api')
+    app.register_blueprint(review_bp, url_prefix='/api')
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(subscription_bp, url_prefix='/api/subscription')
+    app.register_blueprint(integrations_bp, url_prefix='/api/integrations')
+    app.register_blueprint(onboarding_bp, url_prefix='/api/onboarding')
+    app.register_blueprint(advanced_analytics_bp, url_prefix='/api/advanced-analytics')
+    app.register_blueprint(payments_bp, url_prefix='/api/payments')
+    app.register_blueprint(platform_sync_bp)
+    app.register_blueprint(ai_features_bp, url_prefix='/api/ai')
+    app.register_blueprint(enterprise_bp, url_prefix='/api/enterprise')
+    app.register_blueprint(customer_success_bp, url_prefix='/customer-success') # Register customer_success blueprint
 
-# Database configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Initialize database
-db.init_app(app)
-
-with app.app_context():
-    # Create database directory if it doesn't exist
-    db_dir = os.path.join(os.path.dirname(__file__), 'database')
-    os.makedirs(db_dir, exist_ok=True)
-    
-    # Create all tables
-    db.create_all()
-    
-    print("Starting ReviewAssist Pro Enhanced with real-time features...")
-
-def seed_demo_data():
-    """Seed the database with demo data"""
-    try:
-        # Check if data already exists
-        if Review.query.first():
-            return
-        
-        # Sample reviews data
-        reviews_data = [
-            {
-                'reviewer_name': 'John Smith',
-                'platform': 'Google',
-                'rating': 5,
-                'review_text': 'Excellent service! The team was professional and delivered exactly what we needed. Highly recommend!',
-                'sentiment': 'Positive',
-                'status': 'Responded',
-                'response_time': '2.1h',
-                'created_at': datetime.utcnow() - timedelta(days=1)
-            },
-            {
-                'reviewer_name': 'Sarah Johnson',
-                'platform': 'Yelp',
-                'rating': 4,
-                'review_text': 'Great experience overall. The staff was friendly and helpful. Minor delay in delivery but worth the wait.',
-                'sentiment': 'Positive',
-                'status': 'Responded',
-                'response_time': '1.8h',
-                'created_at': datetime.utcnow() - timedelta(days=2)
-            },
-            {
-                'reviewer_name': 'Mike Wilson',
-                'platform': 'Facebook',
-                'rating': 2,
-                'review_text': 'Service was below expectations. Had to wait too long and the final result was not what was promised.',
-                'sentiment': 'Negative',
-                'status': 'Urgent',
-                'response_time': '4.2h',
-                'created_at': datetime.utcnow() - timedelta(hours=6)
-            }
-        ]
-        
-        for review_data in reviews_data:
-            review = Review(**review_data)
-            db.session.add(review)
-        
-        # Add more sample reviews for better demo
-        import random
-        platforms = ['Google', 'Yelp', 'Facebook', 'TripAdvisor']
-        sentiments = ['Positive', 'Negative', 'Neutral']
-        statuses = ['Responded', 'Pending', 'Urgent']
-        
-        for i in range(244):  # Add 244 more to reach 247 total
-            review = Review(
-                reviewer_name=f'Customer {i+4}',
-                platform=random.choice(platforms),
-                rating=random.randint(1, 5),
-                review_text=f'Sample review text {i+4}',
-                sentiment=random.choice(sentiments),
-                status=random.choice(statuses),
-                response_time=f'{random.uniform(0.5, 8.0):.1f}h',
-                created_at=datetime.utcnow() - timedelta(days=random.randint(0, 30))
-            )
-            db.session.add(review)
-        
-        db.session.commit()
-        print("Demo data seeded successfully!")
-        
-    except Exception as e:
-        print(f"Error seeding demo data: {e}")
-
-def seed_auth_data():
-    """Seed authentication data"""
-    try:
-        # Check if auth users already exist
-        if AuthUser.query.first():
-            return
-        
-        # Create demo users
-        demo_users = [
-            {
-                'email': 'admin@reviewassist.com',
-                'password': 'Admin123!',
-                'first_name': 'Admin',
-                'last_name': 'User',
-                'role': UserRole.ADMIN
-            },
-            {
-                'email': 'manager@reviewassist.com',
-                'password': 'Manager123!',
-                'first_name': 'Manager',
-                'last_name': 'User',
-                'role': UserRole.MANAGER
-            },
-            {
-                'email': 'agent@reviewassist.com',
-                'password': 'Agent123!',
-                'first_name': 'Agent',
-                'last_name': 'User',
-                'role': UserRole.AGENT
-            }
-        ]
-        
-        for user_data in demo_users:
-            user = AuthUser(
-                email=user_data['email'],
-                first_name=user_data['first_name'],
-                last_name=user_data['last_name'],
-                role=user_data['role']
-            )
-            user.set_password(user_data['password'])
-            db.session.add(user)
-        
-        db.session.commit()
-        print("Authentication data seeded successfully!")
-    except Exception as e:
-        print(f"Error seeding auth data: {e}")
-
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    static_folder_path = app.static_folder
-    if static_folder_path is None:
-        return "Static folder not configured", 404
-
-    if path != "" and os.path.exists(os.path.join(static_folder_path, path)):
-        return send_from_directory(static_folder_path, path)
+    # Database configuration
+    if config_name == 'config.TestConfig':
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     else:
-        index_path = os.path.join(static_folder_path, 'index.html')
-        if os.path.exists(index_path):
-            return send_from_directory(static_folder_path, 'index.html')
-        else:
-            return "index.html not found", 404
+        app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-@app.route('/health')
-def health_check():
-    """Health check endpoint"""
-    return {
-        'status': 'healthy',
-        'app': 'ReviewAssist Pro Enhanced',
-        'version': '2.0.0',
-        'demo_mode': os.getenv('DEMO_MODE', 'false')
-    }
+    # Initialize database
+    db.init_app(app)
+
+    with app.app_context():
+        # Create database directory if it doesn't exist
+        db_dir = os.path.join(os.path.dirname(__file__), 'database')
+        os.makedirs(db_dir, exist_ok=True)
+        
+        # Create all tables
+        db.create_all()
+        
+        print("Starting ReviewAssist Pro Enhanced with real-time features...")
+
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path:path>')
+    def serve(path):
+        static_folder_path = app.static_folder
+        if static_folder_path is None:
+            return "Static folder not configured", 404
+
+        if path != "" and os.path.exists(os.path.join(static_folder_path, path)):
+            return send_from_directory(static_folder_path, path)
+        else:
+            index_path = os.path.join(static_folder_path, 'index.html')
+            if os.path.exists(index_path):
+                return send_from_directory(static_folder_path, 'index.html')
+            else:
+                return "index.html not found", 404
+
+    @app.route('/health')
+    def health_check():
+        """Health check endpoint"""
+        return {
+            'status': 'healthy',
+            'app': 'ReviewAssist Pro Enhanced',
+            'version': '2.0.0',
+            'demo_mode': os.getenv('DEMO_MODE', 'false')
+        }
+    
+    return app
+
+def seed_demo_data(app):
+    """Seed the database with demo data"""
+    with app.app_context():
+        try:
+            # Check if data already exists
+            if Review.query.first():
+                return
+            
+            # Sample reviews data
+            reviews_data = [
+                {
+                    'reviewer_name': 'John Smith',
+                    'platform': 'Google',
+                    'rating': 5,
+                    'review_text': 'Excellent service! The team was professional and delivered exactly what we needed. Highly recommend!',
+                    'sentiment': 'Positive',
+                    'status': 'Responded',
+                    'response_time': '2.1h',
+                    'created_at': datetime.utcnow() - timedelta(days=1)
+                },
+                {
+                    'reviewer_name': 'Sarah Johnson',
+                    'platform': 'Yelp',
+                    'rating': 4,
+                    'review_text': 'Great experience overall. The staff was friendly and helpful. Minor delay in delivery but worth the wait.',
+                    'sentiment': 'Positive',
+                    'status': 'Responded',
+                    'response_time': '1.8h',
+                    'created_at': datetime.utcnow() - timedelta(days=2)
+                },
+                {
+                    'reviewer_name': 'Mike Wilson',
+                    'platform': 'Facebook',
+                    'rating': 2,
+                    'review_text': 'Service was below expectations. Had to wait too long and the final result was not what was promised.',
+                    'sentiment': 'Negative',
+                    'status': 'Urgent',
+                    'response_time': '4.2h',
+                    'created_at': datetime.utcnow() - timedelta(hours=6)
+                }
+            ]
+            
+            for review_data in reviews_data:
+                review = Review(**review_data)
+                db.session.add(review)
+            
+            # Add more sample reviews for better demo
+            import random
+            platforms = ['Google', 'Yelp', 'Facebook', 'TripAdvisor']
+            sentiments = ['Positive', 'Negative', 'Neutral']
+            statuses = ['Responded', 'Pending', 'Urgent']
+            
+            for i in range(244): # Add 244 more to reach 247 total
+                review = Review(
+                    reviewer_name=f'Customer {i+4}',
+                    platform=random.choice(platforms),
+                    rating=random.randint(1, 5),
+                    review_text=f'Sample review text {i+4}',
+                    sentiment=random.choice(sentiments),
+                    status=random.choice(statuses),
+                    response_time=f'{random.uniform(0.5, 8.0):.1f}h',
+                    created_at=datetime.utcnow() - timedelta(days=random.randint(0, 30))
+                )
+                db.session.add(review)
+            
+            db.session.commit()
+            print("Demo data seeded successfully!")
+            
+        except Exception as e:
+            print(f"Error seeding demo data: {e}")
+
+def seed_auth_data(app):
+    """Seed authentication data"""
+    with app.app_context():
+        try:
+            # Check if auth users already exist
+            if AuthUser.query.first():
+                return
+            
+            # Create demo users
+            demo_users = [
+                {
+                    'email': 'admin@reviewassist.com',
+                    'password': 'password',
+                    'first_name': 'Admin',
+                    'last_name': 'User',
+                    'role': UserRole.ADMIN
+                },
+                {
+                    'email': 'manager@reviewassist.com',
+                    'password': 'password',
+                    'first_name': 'Manager',
+                    'last_name': 'User',
+                    'role': UserRole.MANAGER
+                },
+                {
+                    'email': 'agent@reviewassist.com',
+                    'password': 'password',
+                    'first_name': 'Agent',
+                    'last_name': 'User',
+                    'role': UserRole.AGENT
+                }
+            ]
+            
+            for user_data in demo_users:
+                user = AuthUser(
+                    email=user_data['email'],
+                    first_name=user_data['first_name'],
+                    last_name=user_data['last_name'],
+                    role=user_data['role']
+                )
+                user.set_password(user_data['password'])
+                db.session.add(user)
+            
+            db.session.commit()
+            print("Authentication data seeded successfully!")
+        except Exception as e:
+            print(f"Error seeding auth data: {e}")
 
 if __name__ == '__main__':
+    app = create_app()
     with app.app_context():
         # Seed demo data
-        seed_demo_data()
-        seed_auth_data()
+        seed_demo_data(app)
+        seed_auth_data(app)
     
     print("Starting ReviewAssist Pro Enhanced with real-time features...")
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)

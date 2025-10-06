@@ -133,7 +133,7 @@ def register():
         return jsonify({
             'message': 'User registered successfully',
             'user': user.to_dict(),
-            'token': token
+            'access_token': token
         }), 201
         
     except Exception as e:
@@ -182,7 +182,7 @@ def login():
         return jsonify({
             'message': 'Login successful',
             'user': user.to_dict(),
-            'token': token
+            'access_token': token
         }), 200
         
     except Exception as e:
